@@ -1,3 +1,4 @@
+#1.0
 # ライブラリ読み込み
 import base64
 import binascii
