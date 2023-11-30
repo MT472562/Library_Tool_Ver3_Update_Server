@@ -1,4 +1,4 @@
-#1.0
+#1.1
 # ライブラリ読み込み
 import base64
 import binascii
@@ -23,8 +23,6 @@ from email.mime.text import MIMEText
 import arrow
 import flask
 import qrcode
-from barcode import Code128
-from barcode.writer import ImageWriter
 from flask import render_template, url_for, redirect, jsonify, send_file
 from flask import request
 from flask_httpauth import HTTPDigestAuth
@@ -1109,16 +1107,8 @@ def get_book_data():
     return jsonify(data)
 
 
-def generate_code128_barcode(data, filename):
-    code128 = Code128(data, writer=ImageWriter())
-    barcode_filename = code128.save(filename)
 
 
-def create_barcode(code):
-    data = code
-    filename = f"img/{code}"
-    generate_code128_barcode(data, filename)
-    return filename
 
 
 @app.route("/rental_book_set", methods=['POST'])
@@ -1141,8 +1131,6 @@ def rental_book_set():
     timestamp = time.mktime(time.strptime(now, "%Y/%m/%d"))
     new_timestamp = timestamp + (7 * 24 * 60 * 60)
     rental_id = time.strftime("%Y%m%d%H%M%S") + str(flask.session['userid'])
-    filename = create_barcode(rental_id)
-    filename = f"{filename}.png"
     qr = qrcode.QRCode(
         version=1,  # QRコードのバージョン
         error_correction=qrcode.constants.ERROR_CORRECT_L,  # 誤り訂正レベル
@@ -1152,7 +1140,7 @@ def rental_book_set():
     qr.add_data(rental_id)
     qr.make(fit=True)
     img = qr.make_image(fill_color="black", back_color="white")
-    q_filename = f"{filename}_qr.png"
+    q_filename = f"img/{rental_id}.png"
     img.save(q_filename)
 
     dayplusseven = time.strftime("%Y/%m/%d", time.localtime(new_timestamp))
@@ -1215,7 +1203,7 @@ def rental_book_set():
                                     "〒810-0004 福岡県福岡市中央区渡辺通2-4-8 小学館ビル7階",
                                     f"返却期限が本日です。\n返却コードは『{rental_id}』です。\nキャンパスに返却してください\n返却済みの方は無視してください。",
                                     f"ics/{rental_id}.ics")
-    file_path = [filename, q_filename, ics_file_name]
+    file_path = [q_filename, ics_file_name]
     mail_post_on_file(mail_text, result["mail"], mail_title, file_path)
 
     delete_file(ics_file_name)
@@ -1698,14 +1686,6 @@ def error_401(error):
     return render_template('error_page.html',
                            page_name="401 Unauthorized --",
                            title="401 Unauthorized",
-                           error=error)
-
-
-@app.errorhandler(402)
-def error_402(error):
-    return render_template('error_page.html',
-                           page_name="402 Payment Required --",
-                           title="402 Payment Required",
                            error=error)
 
 @app.errorhandler(403)
@@ -2287,31 +2267,7 @@ def run_flask_app():
     app.run(port=54321, host="0.0.0.0")
 
 
-def other_code():
-    i = 0
-    while True:
-        try:
-            i += 1
-            import datetime
-            now = datetime.datetime.now()
-            h = now.hour
-            if h > 7 and h < 16:
-                new_date_in()
-                return_mail_post()
-                time.sleep(1)
-                print("実行")
-            print(i)
-        except KeyboardInterrupt:
-            print("プログラムが停止されました。")
-            break
-        except Exception as e:
-            print("エラーが発生しました:", str(e))
-        time.sleep(1)
-
-
 ALLOW_NETWORKS = ["127.0.0.1", "192.168.3.7", "10.7.100.94"]
-
-
 # 本番環境ではALLOW_NETWORKSを変更してください
 @app.before_request
 def before_request():
@@ -2327,9 +2283,13 @@ def before_request():
 
 @app.route("/backup_db")
 def backup_db():
-    Maintenance.backup()
-    return redirect("/setting")
-
+    if 'access_level' not in flask.session:
+        return ERROR(16)
+    elif flask.session['access_level'] not in [5]:
+        return ERROR(15)
+    elif flask.session['access_level'] in [5]:
+        Maintenance.backup()
+        return redirect("/setting")
 
 def read_auth_token_from_file(file_path='ngrok_token.json'):
     if os.path.exists(file_path):
@@ -2349,4 +2309,3 @@ if __name__ == '__main__':
     print(public_url)
     flask_thread = threading.Thread(target=run_flask_app)
     flask_thread.start()
-    # other_code()
