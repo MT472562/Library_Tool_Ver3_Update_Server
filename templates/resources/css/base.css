@@ -85,12 +85,12 @@ header {
 
 /* Book Image Styles */
 .bk_img {
-    width: 25px;
-    height: 25px;
+    width: 1.5em;
+    height: 1.5em;
     display: inline-block;
     background-color: transparent;
     border-radius: 50%;
-    border: 1px solid #fff;
+    border: 0.1em solid #fff;
 }
 
 .bk_img:nth-child(1) {
