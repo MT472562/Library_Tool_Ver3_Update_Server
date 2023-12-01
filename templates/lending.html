@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+{% block head %}
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+<!-- <link rel="stylesheet" href="/Library/resources/style.css"> -->
+<!-- スタイルシート読み込みなさい -->
+{% endblock %}
+{% block body %}
+<!-- bodyタグに書く内容を書きなさい -->
+<audio src="resources/audio.mp3" id="audio"></audio>
+<audio src="resources/audio_no.mp3" id="audio-no"></audio>
+<div class="overlay" id="overlay" style="display:none">
+    <div class="loader">
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+</div>
+<div id="management_code_from">
+    <input oninput="get_data()" id="management_code" type="text" pattern="[0-9]*" placeholder="バーコードを入力">
+    <table id="rental_book">
+        <tr>
+            <th id="rental_book_title">本のタイトル</th>
+            <th id="rental_book_code">管理コード</th>
+            <th id="rental_book_delete">削除</th>
+        </tr>
+    </table>
+    <button id="rental_start_button" type="button" onclick="rental_book()" style="display: none">貸出</button>
+
+</div>
+<div id="overlay-camera" style="display: none">
+    <div id="camera-preview">
+        <p id="Reed_msg">A10....から始まるバーコードを読み込んでください</p>
+        <p id="camera_standby">カメラを起動しています...<br>少々お待ちください...</p>
+        <div id="interactive"></div>
+        <button onclick="END_QR_Reader()" id="Reader_end_button">読み取り終了</button>
+    </div>
+</div>
+<button onclick="QR_Reader()" id="Reader_start_button">読み取り開始</button>
+
+<script>
+    if (location.protocol == 'http:') {
+        document.getElementById("Reader_start_button").style.display="none";
+    }
+    function END_QR_Reader() {
+        document.getElementById("overlay-camera").style.display = "none";
+        Quagga.stop();
+    }
+
+    async function QR_Reader() {
+        document.getElementById("overlay-camera").style.display = "block";
+        Quagga.init({
+            inputStream: {
+                name: 'Live',
+                type: 'LiveStream',
+                target: document.querySelector('#interactive'),//埋め込んだdivのID
+            },
+            decoder: {
+                readers: ['codabar_reader']
+            }
+        }, (err) => {
+            if (err) {
+                console.log(err);
+                return
+            }
+            Quagga.start();
+        })
+
+        Quagga.onDetected(async (success) => { // コールバック関数をasyncに変更
+                const code = success.codeResult.code;
+                if (code) {
+                    document.getElementById("overlay-camera").style.display = "none";
+                    Quagga.stop();
+                    var re_code = code.replace(/A/g, '');
+                    const inputValue = re_code;
+                    document.getElementById("overlay").style.display = 'block';
+                    try {
+                        const responseData = await fetchData(inputValue);
+                        console.log(book_data)
+                        var res = hasDuplicateBookCode(book_data, re_code)
+                        console.log(res)
+                        if (res == "yes") {
+                            Quagga.stop();
+                            document.getElementById("overlay-camera").style.display = "none";
+                            document.getElementById("overlay").style.display = "none";
+                            document.getElementById("audio").pause();
+                            document.getElementById("audio-no").play();
+                            return
+                        } else {
+                            document.getElementById("audio").play();
+                            handleResponse(responseData);
+                        }
+                    } catch
+                        (error) {
+                        console.error(error);
+                    }
+                }
+            }
+        )
+        ;
+    }
+
+    function hasDuplicateBookCode(dataList, value) {
+        for (var i = 0; i < dataList.length; i++) {
+            if (dataList[i]["book_code"].toString() === value.toString()) {
+                return "yes";
+            }
+        }
+        return "no";
+    }
+
+
+
+    let book_data = [];
+    async function get_data() {
+        const inputValue = document.getElementById("management_code").value;
+        var re_code = inputValue.replace(/A/g, '');
+        var res = hasDuplicateBookCode(book_data, re_code)
+        if (res == "yes") {
+            top_alert("エラー", "この本は、すでにお客様のカートに読み込まれています。\nこの情報が誤りである場合は図書委員へお声掛けください。", 3000);
+            return
+        } else {
+            if (/^1\d{7}$/.test(inputValue)) {
+            document.getElementById("overlay").style.display = 'block';
+                try {
+                    const responseData = await fetchData(inputValue);
+                    handleResponse(responseData);
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+        }
+    }
+
+    async function fetchData(inputValue) {
+        const response = await fetch('/get_book_data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                management_code: inputValue
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch data. Status: ${response.status}`);
+        }
+
+        return response.json();
+    }
+
+    function handleResponse(responseData) {
+        if (responseData.status === false) {
+            top_alert("該当する書籍が見つかりませんでした", "貸出する本のバーコードを読み取ってください。\nもし、読み取っても反応しない場合は、図書委員に声をかけてください。", 3000);
+        } else if (responseData.rental_status === false) {
+            top_alert("この本は、貸出できません。", "この本は、現在貸出中です。\n返却されるまでお待ち下さい。\nこの情報が誤りの場合、図書委員に声をかけてください.", 3000);
+            } else {
+                document.getElementById("rental_start_button").style.display = "block";
+            updateTable(responseData);
+        }
+
+        resetForm();
+    }
+
+    function updateTable(responseData) {
+        const table = document.getElementById("rental_book");
+        while (table.rows.length > 1) {
+            table.deleteRow(1);
+        }
+
+        book_data.push({
+            title: responseData.book_title,
+            book_code: responseData.book_code
+        });
+
+        for (let i = 0; i < book_data.length; i++) {
+            const row = table.insertRow();
+            const titleCell = row.insertCell();
+            titleCell.style.padding = "10px";
+            const codeCell = row.insertCell();
+            codeCell.style.textAlign = "center";
+            const deleteCell = row.insertCell();
+
+            titleCell.innerText = book_data[i].title;
+            codeCell.innerText = book_data[i].book_code;
+
+            const deleteBtn = document.createElement("img");
+            deleteBtn.src = "resources/svgs/delete.svg";
+            deleteBtn.style.width = "25px";
+            deleteBtn.alt = "削除";
+            deleteBtn.style.display = "block";
+            deleteBtn.style.margin = "0 auto";
+
+            deleteBtn.addEventListener("click", function () {
+                const rowIndex = this.parentNode.parentNode.rowIndex;
+                table.deleteRow(rowIndex);
+                book_data.splice(rowIndex - 1, 1);
+            });
+
+            deleteCell.appendChild(deleteBtn);
+        }
+    }
+
+    function resetForm() {
+        document.getElementById("overlay").style.display = "none";
+        document.getElementById("management_code").value = "";
+    }
+
+    async function rental_book() {
+        document.getElementById("overlay").style.display = "block";
+        if (book_data.length == 0) {
+            top_alert("貸し出す本を入力してください", "貸出する本のバーコードを読み取ってください。", 3000)
+
+            document.getElementById("overlay").style.display = "none";
+        } else {
+            async function fetchData() {
+                const response = await fetch('/rental_book_set', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        book_data: book_data
+                    })
+                });
+                const data = await response.json();
+                return data;
+            }
+
+            top_alert("貸出処理中", "{{ session['username'] }} さんのアカウントで貸出処理中です。\n少々お待ち下さい", 3000)
+            const responseData = fetchData();
+            responseData.then(function (value) {
+                if (value["status"] == true) {
+                    top_alert("貸出完了", "{{ session['username'] }} さんのアカウントで貸出完了しました。\n登録いただいたメールアドレスにメールを送信しています。\n返却手続きなどは、メールを確認してください。", 5000)
+                    location.reload();
+                } else {
+                    window.location.href = "/error?e=10"
+                }
+            });
+        }
+
+    }
+</script>
+{% endblock %}

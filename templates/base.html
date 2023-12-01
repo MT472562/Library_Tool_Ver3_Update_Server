@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var fadeElement = document.querySelector(".fade-in-element");
+        fadeElement.classList.add("fade-in"); // クラスを追加してアニメーションをトリガー
+    });
+</script>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="format-detection" content="email=no,telephone=no,address=no"/>
+    <meta name="description"
+          content="NS高の図書管理システムです。このサイトは限られたユーザーのみが使用を許可されています。"/>
+    <link rel="apple-touch-icon-precomposed" href="resources/svgs/icon.svg"/>
+    <link rel="icon" href="resources/svgs/icon.svg"/>
+    <title>{{ page_name}}NS高図書管理システム</title>
+    <meta name="author" content="NS高福岡キャンパス図書委員会委員長">
+    <link rel="stylesheet" href="resources/css/base.css">
+    <link rel="stylesheet" href="resources/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+    <!--    サイトカード-->
+    <meta name="twitter:site" content="Library-Management"/>
+    <meta name="twitter:card" content="summary_large_image"/>
+    <meta name="twitter:title" content="{{ page_name}}NS高図書管理システム"/>
+    <meta name="twitter:description" content="「NS高図書管理システム」生徒が制作しており、「学校法人角川ドワンゴ学園」とは一切関係ございません"/>
+    <meta name="twitter:image" content="https://user-images.githubusercontent.com/88234127/268456378-a03c209d-85b3-4fb1-9f66-469c7c1719a0.png"/>
+
+    {% block head %}
+    {% endblock %}
+</head>
+<body class="fade-in-element">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<header id="header">
+    <a href="{{ url_for('index') }}" title="ホーム"><img src="resources/svgs/home.svg" id="home_icon"></a>
+    <a href="{{ url_for('account') }}" title="アカウント"><img src="resources/svgs/account.svg"
+                                                               id="account_icon"></a>
+    <a href="{{ url_for('search') }}" title="検索"><img src="resources/svgs/search.svg" id="search_icon"></a>
+    <a href="{{ url_for('lending') }}" title="貸出"><img src="resources/svgs/lending.svg" id="lending_icon"></a>
+    <a href="{{ url_for('areturn') }}" title="返却"><img src="resources/svgs/return.svg" id="return_icon"></a>
+    <a href="{{ url_for('new_book') }}" title="新本登録"><img src="resources/svgs/new_book.svg"
+                                                              id="new_book_icon"></a>
+    <a href="{{ url_for('inventory') }}" title="棚卸し"><img src="resources/svgs/inventory.svg"
+                                                             id="inventory_icon"></a>
+    <a href="{{ url_for('ainfo') }}" title="情報"><img src="resources/svgs/info.svg" id="info_icon"></a>
+</header>
+<div class="grid-container" id="grid-container">
+    <span class="bk_img" onclick="bk_img_set(0)" onmouseover="test_bk_img(0)" onmouseout="end_test()"></span>
+    <span class="bk_img" onclick="bk_img_set(1)" onmouseover="test_bk_img(1)" onmouseout="end_test()"></span>
+    <span class="bk_img" onclick="bk_img_set(2)" onmouseover="test_bk_img(2)" onmouseout="end_test()"></span>
+    <span class="bk_img" onclick="bk_img_set(3)" onmouseover="test_bk_img(3)" onmouseout="end_test()"></span>
+    <span class="bk_img" onclick="bk_img_set(4)" onmouseover="test_bk_img(4)" onmouseout="end_test()"></span>
+    <span class="bk_img" onclick="bk_img_set(5)" onmouseover="test_bk_img(5)" onmouseout="end_test()"></span>
+</div>
+
+<script>
+    function remove_element() {
+        var element = document.getElementById("alert");
+        element.parentNode.removeChild(element);
+    }
+
+    var bk_img_list_alert = [
+        "background-color: hsla(207, 27%, 35%, 0.95);", // 40% less saturated, 95% opacity
+        "background-image: linear-gradient(135deg, hsla(283, 27%, 55%, 0.95) 0%, hsla(313, 27%, 50%, 0.95) 100%);", // 40% less saturated, 95% opacity
+        "background-image: linear-gradient(-225deg, hsla(259, 27%, 55%, 0.95) 0%, hsla(252, 27%, 60%, 0.95) 53%, hsla(252, 27%, 58%, 0.95) 100%);", // 40% less saturated, 95% opacity
+        "background-image: linear-gradient(-225deg, hsla(329, 27%, 45%, 0.95) 0%, hsla(315, 27%, 47%, 0.95) 50%, hsla(266, 27%, 45%, 0.95) 100%);", // 40% less saturated, 95% opacity
+        "background-image: linear-gradient(-225deg, hsla(241, 27%, 40%, 0.95) 0%, hsla(192, 27%, 55%, 0.95) 51%, hsla(174, 27%, 58%, 0.95) 100%);", // 40% less saturated, 95% opacity
+        "background-image: linear-gradient(-20deg, hsla(352, 27%, 60%, 0.95) 0%, hsla(25, 27%, 55%, 0.95) 100%);" // 40% less saturated, 95% opacity
+    ];
+
+
+    function top_alert(title, msg, time) {
+
+        if (time === undefined) {
+            time = 5000;
+        }
+        var alert = document.createElement("div");
+        alert.setAttribute("class", "alert");
+        alert.setAttribute("id", "alert");
+        alert.innerHTML =
+            "<h2 style='margin: 0;padding: 10px;zoom: 80%' class='alert_title' onclick='remove_element()'>" +
+            title +
+            "</h2><hr><div class='alert_msg'onclick='remove_element()'>" +
+            msg.replace(/\n/g, "<br>") +
+            "</div>";
+        document.body.appendChild(alert);
+        console.log(bk_img)
+        if (bk_img == undefined){
+            bk_img = 0
+        }
+        alert.style = bk_img_list_alert[bk_img];
+        console.log("bk_img:", bk_img);
+        // Trigger the fade-in animation by adding the 'show' class
+        setTimeout(function () {
+            alert.classList.add("show");
+        }, 10);
+
+        // Remove the element and trigger the fade-out animation after the specified time
+        setTimeout(function () {
+            alert.style.animation = "fadeOutAndSlideUp 0.5s ease-in-out"; // Apply the fade-out animation
+            setTimeout(function () {
+                alert.remove();
+            }, 500); // Wait for the animation to complete before removing the element
+        }, time);
+    }
+</script>
+<script>
+
+    var bk_img_list = [
+        "background-color: #15202B",
+        "background-image: linear-gradient(135deg, #a560ce 0%, #c459a1 100%)",
+        "background-image: linear-gradient(-225deg, #65379B 0%, #745bc7 53%, #6457C6 100%)",
+        "background-image: linear-gradient(-225deg, #ab0454 0%, #8D0B93 50%, #321575 100%)",
+        "background-image: linear-gradient(-225deg, #473B7B 0%, #3584A7 51%, #29b4a3 100%)",
+        "background-image: linear-gradient(-20deg, #c94c5d 0%, #cc7c37 100%)"
+    ];
+
+    function bk_img_set(num) {
+        setCookie("bk_img", num, 7); // bk_img を文字列として渡す
+        document.body.style.cssText = bk_img_list[num];
+    }
+
+    // Cookieを作成して保存する関数
+    function setCookie(name, value, daysToExpire) {
+        const date = new Date();
+        date.setTime(date.getTime() + (daysToExpire * 24 * 60 * 60 * 1000)); // 設定した日数後の日付を取得
+
+        const expires = "expires=" + date.toUTCString();
+        document.cookie = name + "=" + value + ";" + expires + ";path=/";
+    }
+
+    function getCookie(name) {
+        const decodedCookie = decodeURIComponent(document.cookie);
+        const cookieArray = decodedCookie.split(';');
+
+        for (let i = 0; i < cookieArray.length; i++) {
+            const cookie = cookieArray[i].trim();
+            if (cookie.startsWith(name + "=")) {
+                return cookie.substring(name.length + 1);
+            }
+        }
+        return null;
+    }
+
+    function test_bk_img(num) {
+        document.body.style.cssText = bk_img_list[num];
+    }
+
+    function end_test() {
+        var bk_img = getCookie("bk_img");
+        document.body.style.cssText = bk_img_list[bk_img];
+    }
+
+    var BK_IMG_C
+
+    if (getCookie("bk_img") == null || getCookie("bk_img") == "" || getCookie("bk_img") == undefined) {
+        setCookie("bk_img", 0, 7);
+        document.body.style.cssText = bk_img_list[0];
+    } else {
+        var bk_img = getCookie("bk_img");
+        document.body.style.cssText = bk_img_list[bk_img];
+    }
+
+    function error_c() {
+        const userAgent = navigator.userAgent;
+        const isMobile = /iPhone|iPod|Android/i.test(userAgent);
+        const isTablet = /iPad/i.test(userAgent);
+        const isDesktop = !isMobile && !isTablet;
+        const currentUrl = window.location.pathname;
+        // if (isMobile) {
+        //     if (currentUrl.includes('/error')) {
+        //         return;
+        //     } else {
+        //         window.location.href = "/error?e=3"
+        //     }
+        // }
+        if (isMobile) {
+            var allElements = document.querySelectorAll('*');
+
+            for (var i = 0; i < allElements.length; i++) {
+                var element = allElements[i];
+                element.style.zoom = '20%';
+            }
+
+        }
+    }
+    error_c()
+
+</script>
+<style>
+    .alert {
+        /* Your existing styles here */
+        opacity: 0;
+        position: fixed;
+        left: 50%;
+        transform: translateX(-50%) translateY(-100%); /* Start from the top */
+        z-index: 99999999;
+        /*background-color: rgb(11, 45, 77);*/
+        padding: 1rem;
+        border-radius: 0.5rem;
+        width: 40%;
+        color: #ffffff;
+        border: 3px solid rgba(238, 154, 0, 0.7);
+        transition: opacity 0.3s ease-in-out, transform 0.5s ease-in-out; /* Define the transitions */
+        cursor: default;
+    }
+
+    .show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0); /* Move to the center */
+    }
+
+    @keyframes fadeOutAndSlideUp {
+        0% {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0); /* Start from the center */
+        }
+        100% {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-100%); /* Move up to the top */
+        }
+    }
+
+    /* styles.css */
+    .fade-in-element {
+        opacity: 0; /* 初期状態で非表示 */
+        transition: opacity 1s ease; /* opacityプロパティをアニメーション化 */
+    }
+
+    .fade-in-element.fade-in {
+        opacity: 1; /* フェードイン時の透明度 */
+    }
+
+
+</style>
+
+{% block body %}
+{% endblock %}
+</body>
+
+</html>

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>エラー修正ページ</title>
+</head>
+<body>
+<div class="overlay" style="display: none" id="overlay">
+    <div id="edit_form">
+        <input id="edit_error_id">
+        <textarea id="edit_message"></textarea>
+        <div id="edit_buttons">
+            <button class="button_" id="edit_end" onclick="document.getElementById('overlay').style.display = 'none'">
+                閉じる
+            </button>
+            <button class="button_" id="edit_save" onclick="save()">保存</button>
+        </div>
+    </div>
+</div>
+<button style="width:10%;height: 3rem;color: #0a0a0a;border: none"
+        onclick="window.location.href='https://github.com/MT472562/Library_Tool_Ver3#%E3%82%A8%E3%83%A9%E3%83%BCid%E3%81%AE%E7%A8%AE%E9%A1%9E%E3%81%A8%E5%AF%BE%E5%87%A6%E6%96%B9%E6%B3%95'">
+    エラー詳細
+</button>
+<table>
+    <tbody>
+    <th>ID</th>
+    <th>ErrorID</th>
+    <th>Message</th>
+    <th>edit</th>
+    </tbody>
+    {% for item in data %}
+    <tr>
+        <td>{{ item[0] }}</td>
+        <td>{{ item[1] }}</td>
+        <td>{{ item[2] }}</td>
+        <td>
+            <button class="edit-button" onclick="edit('{{ item[0] }}','{{ item[1] }}','{{ item[2] }}')">編集</button>
+        </td>
+    </tr>
+    {% endfor %}
+
+</table>
+<script>
+    var Editid;
+
+    function edit(id, error_id, message) {
+        document.getElementById("overlay").style.display = "block";
+        document.getElementById("edit_error_id").value = error_id;
+        document.getElementById("edit_message").value = message;
+        Editid = id
+    }
+
+    function save() {
+        if (Editid == "" && Editid == undefined) {
+            alert("原因不明のエラーが発生しました。\nページをリロードしてください")
+            return;
+
+        }
+        var ErrorID = document.getElementById("edit_error_id").value;
+        var ErrorMsg = document.getElementById("edit_message").value;
+
+        var result = confirm("以下の情報でError内容を更新しますがよろしいですか？\n\n" +
+            "ID: " + Editid + "\n" +
+            "ERRORID: " + ErrorID + "\n" +
+            "ERRORMessage\n" +
+            "---------------------" +
+            "\n" + ErrorMsg + "\n---------------------");
+
+
+        if (!result) {
+            alert("処理中断します。")
+            var ErrorID = "";
+            var ErrorMsg = "";
+            Editid = "";
+            return;
+        }
+        data = {
+            "id":Editid,
+            "error_id":ErrorID,
+            "error_msg":ErrorMsg
+        };
+        post_url = "/error_setting_update"
+        fetch(post_url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(res_data => {
+                console.log(res_data);
+                if (res_data["status"]==false){
+                    alert("処理中にエラーが発生しました。ページをロードして再度実行してください");
+                    return;
+                }else {
+                    alert("正常に処理が終了しました。ページをリロードします。");
+                    document.getElementById("overlay").style.display = "none";
+                    window.location.reload();
+
+                }
+            })
+            .catch(error => console.error(error));
+
+
+
+    }
+</script>
+
+<style>
+    * {
+        color: #efefef;
+        font-family: "游ゴシック体", YuGothic, "游ゴシック", "Yu Gothic", sans-serif;
+    }
+
+    body {
+        background-color: #15202B;
+    }
+
+    table {
+        margin: 1rem;
+        position: absolute;
+        /*top: 50%;*/
+        left: 50%;
+        transform: translate(-50%);
+        border-collapse: collapse;
+        border: solid 1px #efefef;
+        width: 80%;
+    }
+
+    th, td {
+        padding: 0.5rem;
+        border: solid 1px #efefef;
+    }
+
+
+    td button {
+        background-color: #00c2ff;
+        border: none;
+        border-radius: 0.5rem;
+        padding: 0.5rem;
+        color: #efefef;
+        font-size: 1rem;
+        cursor: pointer;
+    }
+
+    .overlay {
+        background-color: rgba(23, 21, 43, 0.8);
+        width: 100vw;
+        height: 100vh;
+        position: fixed;
+        z-index: 99999;
+    }
+
+    #edit_form {
+        background-color: #15202B;
+        width: 30%;
+        height: 60%;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        border-radius: 1rem;
+        padding: 1rem;
+    }
+
+    #edit_error_id {
+        width: 80%;
+        height: 2rem;
+        position: absolute;
+        top: 10%;
+        left: 50%;
+        transform: translate(-50%);
+        color: #15202B;
+        font-size: 1.5rem;
+    }
+
+    #edit_message {
+        width: 80%;
+        height: 50%;
+        position: absolute;
+        top: 30%;
+        left: 50%;
+        transform: translate(-50%);
+        color: #15202B;
+        font-size: 1.2rem;
+    }
+
+    #edit_error_id:focus, #edit_message:focus {
+        outline: solid 2px #00c2ff;
+    }
+
+    .button_ {
+        width: 25%;
+        height: 2.5rem;
+        color: #15202B;
+        border: none;
+        border-radius: 0.5rem;
+        font-size: 1.3rem;
+
+    }
+
+    #edit_buttons {
+        width: 100%;
+        text-align: center;
+        position: absolute;
+        top: 87%;
+        right: 0%;
+    }
+
+    #edit_end {
+        background-color: #ee9a00;
+    }
+
+    #edit_save {
+        background-color: #00c2ff;
+    }
+</style>
+</body>
+</html>

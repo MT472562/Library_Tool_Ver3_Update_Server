@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block head %}
+<!-- <link rel="stylesheet" href="/Library/resources/style.css"> -->
+<!-- スタイルシート読み込みなさい -->
+{% endblock %}
+{% block body %}
+<!-- bodyタグに書く内容を書きなさい -->
+<div class="overlay" id="overlay" style="display:none">
+    <div class="loader">
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+</div>
+
+<div id="links">
+        <button onclick="redirectTo('/db_log')">DBログ</button>
+        <button onclick="redirectTo('/user_setting')">ユーザー管理</button>
+        <button onclick="redirectTo('/rental_data')">貸出管理</button>
+        <button onclick="redirectTo('/book_setting')">蔵書管理</button>
+        <button onclick="redirectTo('/log_check')">システムログ</button>
+        <button onclick="redirectTo('/error_setting')">エラー修正</button>
+    <button onclick="maintenance()">メンテナンス</button>
+    <button onclick="redirectTo('/backup_db');top_alert('実行中','処理が終了するまでページを閉じないでください\nバックアップを作成中....\n詳細はログを確認してください',999999)">
+        データベースバックアップ
+    </button>
+</div>
+<script>
+        function redirectTo(url) {
+                window.location.href = url;
+        }
+
+        function maintenance() {
+            const response = prompt("Maintenanceを開始すると以下の操作が行われます。\n----------------------------\n" +
+                "データベースのフルバックアップ\n" +
+                "icsファイルの初期化\n" +
+                "imgファイルの初期化\n" +
+                "inventoryファイルの初期化\n" +
+                "logsファイルの初期化\n" +
+                "----------------------------\n" +
+                "Maintenanceをほんとに開始しますか？ (y/n): ");
+
+            if (response.toLowerCase() === 'y') {
+                top_alert("処理開始", "Maintenanceを開始...\n 以下の処理が実行されています。\n \n " +
+                    "データベースのバックアップ終了→◎\n" +
+                    "実行中... |フォルダ 'ics' を確認→◎\n" +
+                    "実行中... |フォルダ 'ics' をクリーンアップ→◎\n" +
+                    "実行中... |フォルダ 'img' を確認→◎\n" +
+                    "実行中... |フォルダ 'img' をクリーンアップ→◎\n" +
+                    "実行中... |フォルダ 'inventory' を確認→◎\n" +
+                    "実行中... |フォルダ 'inventory' をクリーンアップ→◎\n" +
+                    "実行中... |フォルダ 'logs' を確認→◎\n" +
+                    "実行中... |フォルダ 'logs' をクリーンアップ→◎\n" +
+                    "実行中... |level1のログデータで30日以上前のものを削除→◎\n" +
+                    "実行中... |level2のログデータで365日以上前のものを削除→◎\n\n\n" +
+                    "<h3>すべての処理が終了するまでがページを閉じないでください</h3>", 400000);
+                document.getElementById("overlay").style.display = 'block';
+                fetch('/MaintenanceRun', {
+                    method: 'POST', // または 'GET' など、リクエストの種類に応じて変更
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // 他に必要なヘッダーがあれば追加
+                    },
+                    body: JSON.stringify({
+                        // リクエスト本文があれば追加
+                    }),
+                }).then(response => {
+                    // リクエストが成功した場合の処理
+                    top_alert("情報", '<h2>正常に処理が完了しました!!ページをリロードします</h2>');
+                }).catch(error => {
+                    // エラーが発生した場合の処理
+                    console.error('エラーが発生しました。', error);
+                });
+                setTimeout(() => {
+                    top_alert("処理完了","<h2>結果を認証中です!!</h2>\n" +
+                        "処理が終了次第ページをリロードします...")
+                }, 38000);
+                setTimeout(() => {
+                    window.location.reload();
+                }, 45000);
+
+            } else if (response.toLowerCase() === 'n') {
+                top_alert("情報", "Maintenanceをキャンセルしました。");
+                // ここにキャンセル時のコードを追加
+            } else {
+                top_alert("情報", "無効な入力です。'y'または'n'で答えてください。");
+                // ここに無効な入力時のコードを追加
+            }
+
+        }
+</script>
+{% endblock %}

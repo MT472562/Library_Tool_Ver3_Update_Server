@@ -1,0 +1,443 @@
+{% extends "base.html" %}
+{% block head %}
+<!-- <link rel="stylesheet" href="/Library/resources/style.css"> -->
+<!-- スタイルシート読み込みなさい -->
+{% endblock %}
+{% block body %}
+<!-- bodyタグに書く内容を書きなさい -->
+<div class="overlay" id="overlay" style="display:none">
+    <div class="loader">
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+</div>
+
+<div id="create_account">
+
+    <form id="create_account_form" method="post" autocomplete="off">
+        <input onkeydown="ck_mail()" oninput="ck_mail()" type="email" id="mailaddress" name="mailaddress"
+               placeholder="メールアドレスを入力">
+        <span id="email-check"></span>
+
+        <input oninput="ck_password1()" type="password" id="password" name="password" placeholder="パスワードを入力">
+
+        <span id="password1-check" onclick="view_password()"></span>
+
+        <input onBlur="ck_userid()" pattern="^[0-9a-zA-Z]+$" type="text" title="英数字以外は入力できません。" type="text"
+               id="userid"
+               name="userid" placeholder="ログインIDを入力">
+        <span id="userid-check"></span>
+
+        <input oninput="ck_in()" type="text" id="username" name="username" placeholder="名前を入力(Slack名推奨)">
+        <span id="username-check"></span>
+
+        <select onchange="ck_Level()" id="axesslevel" name="axesslevel" placeholder="アクセスレベルを指定">
+            <option value="">----アカウントの権限レベルを選択----</option>
+            <option value="1">Level 1(生徒　レンタル専用)</option>
+            <option value="2">Level 2(メンター)</option>
+            <option value="3">Level 3(図書委員)</option>
+            <option value="4">Level 4(図書副委員長・委員長)</option>
+            <option value="5">Level 5(技術管理者)</option>
+        </select>
+        <span id="Level-check"></span>
+        <div id="ck_account_div" style="display: none">
+            <input oninput="ck_in_id()" id="certification_id" type="text" name="certification"
+               placeholder="アカウント作成認証IDを入力">
+        <span id="certification-id-check"></span>
+
+        <input oninput="ck_in_pw()" id="certification_pw" type="password" name="certification"
+               placeholder="アカウント作成認証パスワードを入力">
+        <span id="certification-pssword-check"></span>
+        </div>
+        <button type="button" onclick="create_account()" id="create_account_start_button">アカウント登録</button>
+    </form>
+    <div id="certification_div">
+        <p>認証パスワードについて<br>
+            Level1〜2のアカウントは認証不要<br>
+            Level3~4のアカウントは4以上のアカウント<br>
+            Level5のアカウントは5のアカウントを入力</p>
+        <a style="color: #0a0a0a;font-size: 0.7rem" target="_blank" href="https://www.youtube.com/watch?v=dKLmapyHmP8">
+            アカウントの作り方の詳細はこちらから
+        </a>
+        <p></p>
+
+    </div>
+</div>
+<div class="verification-code-input" id="check_Number" style="display:none">
+    <h3>メールを確認して、6桁の数字を入力してください</h3>
+    <input id="ck_id" type="text" inputmode="numeric" maxlength="6"/>
+<!--    <button id="return_page" onclick="document.getElementById('overlay').style.display='none'">メールアドレスを訂正する</button>-->
+</div>
+{% if new_account %}
+<div class="alert alert-success" role="alert" style="display: none;z-index: 9999">
+    <h4 class="alert-heading">アカウント作成が完了しました！</h4>
+    <p>以下の情報でアカウントが作成されました。</p>
+    <hr>
+    <ul>
+        <li>ユーザー名: {{ new_account.username }}</li>
+        <li>ユーザーID: {{ new_account.userid }}</li>
+        <li>アクセスレベル: {{ new_account.axesslevel }}</li>
+    </ul>
+    <p class="mb-0">引き続きサイトをご利用ください。</p>
+    <a href="/account">アカウントページへ</a>
+</div>
+{% endif %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    top_alert("ヘルプ","<a target='_blank' href='https://youtu.be/dKLmapyHmP8?si=JQ5fNrDE4ogig8l1'>YouTube</a>にて動画付きでアカウント作成方法を解説しています。\nもしよければご確認ください。",10000)
+    let email_st;
+    let password1_st;
+    let userid_st;
+    let username_st;
+    let axesslevel_st;
+    let certification_id_st;
+    let certification_pw_st;
+    let isOn = false;
+    document.getElementById("mailaddress").focus();
+
+    function ck_mail() {
+        const emailInput = document.getElementById("mailaddress");
+        const emailCheck = document.getElementById("email-check");
+
+        emailInput.addEventListener("input", function () {
+            const email = emailInput.value;
+
+            if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                emailCheck.style.border = "4px solid #4EDB00";
+                email_st = true;
+            } else {
+                emailCheck.style.border = "4px solid #ff1f1f"; // 黒色に設定
+                email_st = false;
+            }
+        });
+    }
+
+
+
+
+    function ck_password1() {
+
+        const passwordInput = document.getElementById("password");
+        const passwordCheck = document.getElementById("password1-check")
+        const password = passwordInput.value;
+
+        if (/^(?=.*[0-9])(?=.*[a-zA-Z])([a-zA-Z0-9]+)$/.test(password) && password.length >= 5) {
+            passwordCheck.style.border = "4px solid #4EDB00";
+            password1_st = true;
+        } else {
+            passwordCheck.style.border = "4px solid #ff1f1f";
+            password1_st = false;
+        }
+    }
+
+    function ck_userid() {
+        const newuserid = document.getElementById("userid").value;
+        const userid_check = document.getElementById("userid-check");
+        const regex = /[^\x01-\x7E]+/;
+        const containsJapanese = regex.test(newuserid);
+        if (newuserid == "") {
+            userid_check.style.border = "4px solid #ff1f1f";
+            userid_st = false;
+        } else if (containsJapanese === true) {
+            userid_check.style.border = "4px solid #ff1f1f";
+            userid_st = false;
+
+        } else {
+            fetch('/user_check', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({new_id: newuserid})
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // ここで受け取ったデータを別の関数などに渡すなどして利用することができる
+                    if (data["status"] === true) {
+                        userid_check.style.border = "4px solid #4EDB00";
+                        userid_st = true;
+                    } else {
+                        userid_check.style.border = "4px solid #ff1f1f";
+                        userid_st = true;
+                        top_alert("使用済みのID", "このIDはすでに利用済みのため、使用することができません", 3000);
+                    }
+                })
+                .catch(error => console.error(error));
+        }
+    }
+
+    function view_password() {
+        var ps = document.getElementById("password").value
+        if (ps == "") {
+            top_alert("パスワード確認", "パスワードを入力してください", 1000)
+        } else {
+            top_alert("パスワード確認", ps, 2000)
+        }
+    }
+
+    function ck_in() {
+        const name = document.getElementById("username");
+        const name_ck = document.getElementById("username-check");
+        if (name.value !== "") {
+            name_ck.style.border = "4px solid #4EDB00";
+            username_st = true;
+        } else {
+            name_ck.style.border = "4px solid #ff1f1f";
+            username_st = false;
+        }
+    }
+
+    function ck_Level() {
+        const option = document.getElementById("axesslevel").value;
+        const option_ck = document.getElementById("Level-check");
+        if (option == "2" || option == "1") {
+            top_alert("お知らせ", "level1,2のアカウント作成に認証は不要です。\nアカウント登録ボタンを押してください", 5000);
+            document.getElementById("ck_account_div").style.display = "none";
+            document.getElementById("certification_id").value = "0000";
+            document.getElementById("certification_pw").value = "0000";
+
+            let name_ck__ = document.getElementById("certification-pssword-check");
+            name_ck__.style.border = "4px solid #4EDB00";
+            certification_pw_st = true;
+
+            let name_ck___ = document.getElementById("certification-id-check");
+            name_ck___.style.border = "4px solid #4EDB00";
+            certification_id_st = true;
+            axesslevel_st = true;
+
+            option_ck.style.border = "4px solid #4EDB00"
+            document.getElementById("certification_id").disabled = true;
+            document.getElementById("certification_pw").disabled = true;
+
+            document.getElementById("create_account_start_button").focus();
+
+        } else if (option == "3" || option == "4") {
+            document.getElementById("ck_account_div").style.display = "block";
+            top_alert("確認", "認証欄にはアクセスレベル4以上のアカウントを入力してください", 3000);
+            document.getElementById("certification_id").disabled = false;
+            document.getElementById("certification_pw").disabled = false;
+            document.getElementById("certification_id").value = "";
+            document.getElementById("certification_pw").value = "";
+
+            let name_ck__ = document.getElementById("certification-pssword-check");
+            name_ck__.style.border = "4px solid #ff1f1f";
+            certification_pw_st = false;
+
+            let name_ck___ = document.getElementById("certification-id-check");
+            name_ck___.style.border = "4px solid #ff1f1f";
+            certification_id_st = false;
+
+            axesslevel_st = true;
+            option_ck.style.border = "4px solid #4EDB00"
+        } else if (option == "5") {
+            document.getElementById("ck_account_div").style.display = "block";
+            top_alert("確認", "認証欄にはアクセスレベル5のアカウントを入力してください", 3000);
+            document.getElementById("certification_id").disabled = false;
+            document.getElementById("certification_pw").disabled = false;
+            axesslevel_st = true;
+            option_ck.style.border = "4px solid #4EDB00"
+            document.getElementById("certification_id").value = "";
+            document.getElementById("certification_pw").value = "";
+
+            let name_ck__ = document.getElementById("certification-pssword-check");
+            name_ck__.style.border = "4px solid #ff1f1f";
+            certification_pw_st = false;
+
+            let name_ck___ = document.getElementById("certification-id-check");
+            name_ck___.style.border = "4px solid #ff1f1f";
+            certification_id_st = false;
+        } else {
+            option_ck.style.border = "4px solid #ff1f1f";
+            axesslevel_st = false;
+        }
+
+    }
+
+    function ck_in_id() {
+        const name_ = document.getElementById("certification_id");
+        const name_ck_ = document.getElementById("certification-id-check");
+        if (name_.value !== "") {
+            name_ck_.style.border = "4px solid #4EDB00";
+            certification_id_st = true;
+        } else {
+            name_ck_.style.border = "4px solid #ff1f1f";
+            certification_id_st = false;
+        }
+    }
+
+    function ck_in_pw() {
+        const name__ = document.getElementById("certification_pw");
+        const name_ck__ = document.getElementById("certification-pssword-check");
+        if (name__.value !== "") {
+            name_ck__.style.border = "4px solid #4EDB00";
+            certification_pw_st = true;
+        } else {
+            name_ck__.style.border = "4px solid #ff1f1f";
+            certification_pw_st = false;
+        }
+    }
+
+    function input_set() {
+        document.getElementById("mailaddress").value = ""
+        document.getElementById("password").value = "";
+        document.getElementById("userid").value = "";
+        document.getElementById("username").value = "";
+        document.getElementById("certification_id").value = "";
+        document.getElementById("certification_pw").value = "";
+        document.getElementById("axesslevel").value = "";
+        document.querySelectorAll('span').forEach(element => {
+            element.style.border = "4px solid #4EDB00";
+        });
+    }
+
+
+    async function create_account() {
+        let mailaddress = document.getElementById("mailaddress").value;
+        let password = document.getElementById("password").value;
+        let userid = document.getElementById("userid").value;
+        let username = document.getElementById("username").value;
+        let certification_id = document.getElementById("certification_id").value;
+        let certification_pw = document.getElementById("certification_pw").value;
+        let axesslevel = document.getElementById("axesslevel").value;
+        const password_hash = CryptoJS.SHA512(password).toString();
+        const certification_pw_hash = CryptoJS.SHA512(certification_pw).toString();
+
+        if (email_st && password1_st && userid_st && username_st && axesslevel_st && certification_id_st && certification_pw_st) {
+            isOn = !isOn;
+            document.getElementById("overlay").style.display = 'block';
+
+            async function fetchData() {
+                try {
+                    const response = await fetch('/check_email_and_certification', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            email: mailaddress,
+                            certification_id: certification_id,
+                            certification_pw_hash: certification_pw_hash,
+                            axesslevel: axesslevel,
+                            username: username
+                        })
+                    });
+                    const data = await response.json();
+                    return data;
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+
+// fetchData関数を呼び出す
+            const responseData = await fetchData();
+            const resdata_status = responseData["axess_status"];
+            if (!resdata_status) {
+                top_alert("エラー", "アカウント作成認証が拒否されました。\n再度、認証アカウントを確認してください。", 3000);
+                document.getElementById("overlay").style.display = 'none';
+            } else {
+                const resdata_hash = responseData["random_hash"];
+                document.getElementById("check_Number").style.display = "block";
+
+                function waitForInput() {
+                    return new Promise(resolve => {
+                        const input = document.querySelector('.verification-code-input input');
+                        input.addEventListener('input', function handler() {
+                            if (input.value.length === 6) {
+                                input.removeEventListener('input', handler);
+                                resolve(input.value);
+                            }
+                        });
+                    });
+                }
+
+                function verifyInput() {
+                    waitForInput().then(value => {
+                        // ここで入力された値を使用して何らかの処理を行う
+                        let ck_in_number = CryptoJS.SHA512(value).toString();
+                        if (ck_in_number == resdata_hash) {
+                            let input = document.getElementById("check_Number");
+                            input.blur();
+                            setTimeout(() => {
+                                const Toast = Swal.mixin({
+                                    toast: true,
+                                    position: 'top-end',
+                                    showConfirmButton: false,
+                                    timer: 3000,
+                                    timerProgressBar: true,
+                                    didOpen: (toast) => {
+                                        toast.addEventListener('mouseenter', Swal.stopTimer)
+                                        toast.addEventListener('mouseleave', Swal.resumeTimer)
+                                    }
+                                })
+
+                                Toast.fire({
+                                    icon: 'success',
+                                    title: 'メールアドレスを確認しました'
+                                })
+
+                                document.getElementById("check_Number").style.transition = "all 0.5s ease-out";
+                                document.getElementById("check_Number").style.opacity = 0;
+                                document.getElementById("check_Number").style.pointerEvents = "none";
+                                setTimeout(() => {
+                                    document.getElementById("check_Number").style.display = "none";
+                                }, 500);
+                            }, 500);
+                            //アカウント登録に必要な動作
+                            fetch('/create_account_data_post', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    mailaddress: mailaddress,
+                                    password_hash: password_hash,
+                                    userid: userid,
+                                    username: username,
+                                    axesslevel: axesslevel
+                                })
+                            })
+                                .then(response => {
+                                    input_set();
+                                    top_alert("お知らせ","アカウントの作成が完了しました\n" +
+                                        "登録された内容は以下のとおりです。\n" +
+                                        "誤りがある場合は、図書委員に声をかけてください\n\n" +
+                                        "ユーザー名: " + username + "\n" +
+                                        "ユーザーID: " + userid + "\n" +
+                                        "アクセスレベル: " + axesslevel + "\n\n" +
+                                        "ユーザーIDはログイン時に使用するので、忘れないようにしてください。\n",10000)
+                                    window.location.replace('/account');
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);
+                                });
+
+
+                        } else {
+                            if (confirm('入力された値が正しくありません。\n再度入力する際は、[OK]を選択してください\n情報を修正する場合は[キャンセル]を選択してください')) {
+                                verifyInput();
+                            } else {
+                                document.getElementById("overlay").style.display = 'none';
+                                document.getElementById("check_Number").style.display = "none";
+                            }
+                        }
+                    });
+                }
+
+                verifyInput();
+
+            }
+
+        } else {
+            top_alert("入力内容に誤りがあります。", "入力欄を再度確認してください。\n右側のチェックマークが全て緑になっているか確認してください。", 3000);
+
+        }
+
+
+    }
+</script>
+
+{% endblock %}

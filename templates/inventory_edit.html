@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<style>
+    .alert {
+        /* Your existing styles here */
+        opacity: 0;
+        position: fixed;
+        left: 50%;
+        transform: translateX(-50%) translateY(-100%); /* Start from the top */
+        z-index: 99999999;
+        background-color: #213344;
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+        width: 40%;
+        color: #ffffff;
+        border: 1px solid #ee9a00;
+        transition: opacity 0.3s ease-in-out, transform 0.5s ease-in-out; /* Define the transitions */
+    }
+
+    .show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0); /* Move to the center */
+    }
+
+    @keyframes fadeOutAndSlideUp {
+        0% {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0); /* Start from the center */
+        }
+        100% {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-100%); /* Move up to the top */
+        }
+    }
+</style>
+
+<script>
+    function remove_element() {
+        var element = document.getElementById("alert");
+        element.parentNode.removeChild(element);
+    }
+
+    function top_alert(title, msg, time) {
+        if (time === undefined) {
+            time = 5000;
+        }
+        var alert = document.createElement("div");
+        alert.setAttribute("class", "alert");
+        alert.setAttribute("id", "alert");
+        alert.innerHTML =
+            "<div class='alert_title' onclick='remove_element()'>" +
+            title +
+            "</div><div class='alert_msg'onclick='remove_element()'>" +
+            msg.replace(/\n/g, "<br>") +
+            "</div>";
+        document.body.appendChild(alert);
+
+        // Trigger the fade-in animation by adding the 'show' class
+        setTimeout(function () {
+            alert.classList.add("show");
+        }, 10);
+
+        // Remove the element and trigger the fade-out animation after the specified time
+        setTimeout(function () {
+            alert.style.animation = "fadeOutAndSlideUp 0.5s ease-in-out"; // Apply the fade-out animation
+            setTimeout(function () {
+                alert.remove();
+            }, 500); // Wait for the animation to complete before removing the element
+        }, time);
+    }
+</script>
+
+<html lang="ja">
+<div class="overlay" id="overlay" style="display:none">
+    <div class="loader">
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+    <input oninput="set_post_inventory_data()" type="text" id="code_input" placeholder="管理コードを入力">
+    <button id="end_set_inventory" onclick="window.location.reload()">終了</button>
+</div>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ page_name }}</title>
+</head>
+<body>
+<div class="container">
+    <div class="box" id="status_elements">
+        <h3>テーブル名 【<span style="color: #bdc4ff">{{table_name}}</span>】</h3>
+        <h3>棚卸しテーブル作成日 【<span style="color: #00bbdd">{{data[2]}}</span>】</h3>
+        <h3>テーブル最終稿便日 【<span id="last_update_inventory" style="color: #f85d5d">{{data[4]}}</span>】</h3>
+        <h3>棚卸検索　
+            <button onclick="set_query()"
+                    style="background-color: #00a4e0;color: #efefef;height: 1.8rem;border: none;border-radius: 6px">
+                データを検索対象に追加
+            </button>
+            <textarea style="width: 90%;height: 70px;color: #0a0a0a;font-size: 1.2rem"
+                      placeholder="検索文字列を半角の”,”で区切って入力してください" id="search_code"></textarea></h3>
+    </div>
+    <div id="buttons_div" class="box">
+        {% if update == "1" %}
+        <button style="margin: 0.5rem" onclick="overlay()">棚卸しスタート</button>
+        {% elif update == "0" %}
+        <button style="margin: 0.5rem;background-color: #efefef;color: #15202B;text-decoration: line-through;"
+                onclick="top_alert('エラー','貸出中のデータがあります。\n返却処理を行ってから登録が可能になります。',5000)">
+            棚卸しスタート
+        </button>
+        {% elif update == "400" %}
+        <button style="margin: 0.5rem"
+                onclick="top_alert('エラー','この棚卸しデータは、現在使用されているbookデータベースのデータと違いがあるため、使用はできません。', 999999)">
+            棚卸しスタート
+        </button>
+        {% elif update == "403" %}
+        <button style="margin: 0.5rem"
+                onclick="top_alert('エラー','この棚卸しデータはロック済みです。新規で更新する場合、新しく棚卸データを設計してください。', 999999)">
+            棚卸しスタート
+        </button>
+        {% else %}
+        <button style="margin: 0.5rem" onclick="top_alert('エラー','原因不明のエラーが発生しました', 999999)">
+            棚卸しスタート
+        </button>
+        {% endif %}
+
+
+        <button style="margin: 0.5rem" onclick="dw_data()">CSVダウンロード</button>
+        {% if update != "403" %}
+        <button onclick="rockinventory()" style="margin: 0.5rem">ロック</button>
+        {% else %}
+        <button style="margin: 0.5rem"
+                onclick="top_alert('エラー','この棚卸しデータはロック済みです。新規で更新する場合、新しく棚卸データを設計してください。', 999999)">
+            ロック
+        </button>
+        {% endif %}
+    </div>
+</div>
+<div id="inventory_data_table">
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>管理コード</th>
+            <th>ISBN</th>
+            <th>書籍名</th>
+            <th>棚卸しチェック</th>
+
+        </tr>
+        </thead>
+        {% for row in inventory_data %}
+        <tr>
+            <td>{{ row[0] }}</td>
+            <td>{{ row[1] }}</td>
+            <td>{{ row[2] }}</td>
+            <td>{{ row[3] }}</td>
+            {% if row[4] == 1 %}
+            <td style="color: #00a4e0">☑蔵書確認</td>
+            {% else %}
+            <td style="color:#ff6666 ">☒未確認</td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+
+    </table>
+</div>
+
+
+</body>
+<script>
+    function get_code() {
+        // 現在のURLを取得
+        var currentURL = window.location.href;
+        // URLからクエリ文字列（?以降の部分）を抽出
+        var queryString = currentURL.split('?')[1];
+        // クエリ文字列をオブジェクトにパース
+        var queryParams = {};
+        if (queryString) {
+            var pairs = queryString.split('&');
+            for (var i = 0; i < pairs.length; i++) {
+                var pair = pairs[i].split('=');
+                var key = decodeURIComponent(pair[0]);
+                var value = decodeURIComponent(pair[1]);
+                queryParams[key] = value;
+            }
+        }
+        // 特定のクエリパラメータ（例: "code"）の値を取得
+        var codeValue = queryParams["code"];
+        // codeValueを表示
+        // console.log("codeパラメータの値: " + codeValue);
+        return codeValue;
+    }
+
+    document.getElementById("search_code").value = get_code();
+
+
+</script>
+<script>
+    const type = "{{update}}";
+    if (type === "400") {
+        top_alert("エラー", "この棚卸しデータは、現在使用されているbookデータベースのデータと違いがあるため、使用はできません。", 999999)
+    }else if (type =="403"){
+        top_alert("エラー","この棚卸データはロック済みです。　更新は不可能です。",99999)
+    }
+
+    function search_data(management_code) {
+        var search_area = document.getElementById("search_code").value.split(",");
+        // console.log(search_area);
+        for (var i = 0; i < search_area.length; i++) {
+            if (management_code==search_area[i]){
+                alert("検索対象の本が読み込まれました。\n読み込まれた管理コードは"+i+"です。")
+            }
+        }
+
+
+    }
+
+    function set_query() {
+        var search_area = document.getElementById("search_code").value;
+        // 新しいクエリパラメータを設定
+        var paramName = "code";
+        var paramValue = search_area;
+
+// 現在のURLを取得
+        var currentURL = window.location.href;
+
+// 新しいクエリパラメータを追加または更新
+        var updatedURL;
+        if (currentURL.indexOf("?") === -1) {
+            // URLにまだクエリパラメータが含まれていない場合、クエリ文字列を作成
+            updatedURL = currentURL + "?" + paramName + "=" + paramValue;
+        } else {
+            // URLにすでにクエリパラメータが含まれている場合、クエリパラメータを追加または更新
+            var urlWithoutParams = currentURL.split("?")[0];
+            var existingParams = currentURL.split("?")[1].split("&");
+
+            // 既存のクエリパラメータを確認し、同じ名前のパラメータがあれば更新
+            var paramUpdated = false;
+            for (var i = 0; i < existingParams.length; i++) {
+                var pair = existingParams[i].split("=");
+                if (pair[0] === paramName) {
+                    existingParams[i] = paramName + "=" + paramValue;
+                    paramUpdated = true;
+                    break;
+                }
+            }
+
+            // クエリパラメータが更新されなかった場合、新しいパラメータを追加
+            if (!paramUpdated) {
+                existingParams.push(paramName + "=" + paramValue);
+            }
+
+            // クエリパラメータを含む新しいURLを作成
+            updatedURL = urlWithoutParams + "?" + existingParams.join("&");
+        }
+
+// 新しいURLでページをリロード
+        window.location.href = updatedURL;
+    }
+
+
+
+    function dw_data() {
+        document.getElementById("overlay").style.display = "block";
+        document.getElementById("code_input").style.display = "none";
+        document.getElementById("end_set_inventory").style.display = "none";
+        top_alert("処理中", "データ集計・ダウンロード準備を行っています。少々お待ちください...", 3000);
+        data = {
+            "hash": "{{data[5]}}",
+            "table_name": "{{table_name}}",
+        };
+        post_url = "/inventory/{{data[5]}}/dw_data"
+        fetch(post_url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(res_data => {
+                let i = 5;
+                const intervalId = setInterval(function () {
+                    document.getElementById("count").innerHTML = i;
+                    if (i === 1) {
+                        document.getElementById("overlay").style.display = "none";
+                        document.getElementById("code_input").style.display = "block";
+                        document.getElementById("end_set_inventory").style.display = "block";
+                        clearInterval(intervalId); // カウントダウン終了後、インターバルをクリア
+                    }
+                    i--;
+                }, 1000);
+                // console.log(res_data);
+                if (res_data["res_data"]["status"] === 200) {
+                    var message = `ダウンロード処理中です...\nデータダウンロードまであと<span id="count">5</span>秒\n移動しない場合は、<a href="${"/" + res_data["res_data"]["url"]}">こちら</a>をクリックしてください。`;
+                    top_alert("【情報】", message, 5000);
+                    setTimeout(function () {
+                        window.location.replace("/" + res_data["res_data"]["url"]);
+                    }, 5000);
+
+                }
+
+            })
+            .catch(error => console.error(error));
+
+
+    }
+
+    function overlay() {
+        var codes = document.getElementById("search_code").value;
+        // console.log(codes)
+        // console.log(get_code())
+        if (get_code() != codes) {
+            top_alert("Error", "検索用コードの内容が反映されていません。データを検索対象に追加してください。")
+            return
+        }
+
+        document.getElementById("overlay").style.display = "block";
+        document.getElementById("code_input").focus();
+    }
+
+    function set_post_inventory_data() {
+        const inputFieldValue = document.getElementById('code_input').value;
+        if (inputFieldValue.length === 8) {
+            document.getElementById("code_input").value = "";
+            search_data(inputFieldValue)
+            data = {
+                "hash": "{{data[5]}}",
+                "table_name": "{{table_name}}",
+                "code": inputFieldValue
+            };
+
+            post_url = "/inventory/{{data[5]}}/update"
+            fetch(post_url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+                .then(response => response.json())
+                .then(res_data => {
+                    // console.log(res_data);
+                    if (res_data["res_data"]["status"] === 200) {
+                        // console.log(res_data["res_data"]["message"])
+                        top_alert("情報", res_data["res_data"]["message"], 2000)
+                    } else if (res_data["res_data"]["status"] === 400) {
+                        // console.log(res_data["res_data"]["message"])
+                        top_alert("情報", res_data["res_data"]["message"], 1000)
+                    }
+
+                })
+                .catch(error => console.error(error));
+        }
+    }
+
+    function blinkElement(element, interval) {
+        let visible = true;
+        setInterval(() => {
+            if (visible) {
+                element.style.visibility = "hidden";
+            } else {
+                element.style.visibility = "visible";
+            }
+            visible = !visible;
+        }, interval);
+    }
+
+    const targetSpan = document.getElementById("last_update_inventory");
+    if (targetSpan) {
+        blinkElement(targetSpan, 700); // 1000ミリ秒 (1秒) ごとに点滅させる
+    }
+
+    function rockinventory() {
+        const inputdata = prompt("ロックすると、この棚卸データは使用できなくなります。\n本当にロックする場合は[ロックします]と入力してください。");
+        if (inputdata != "ロックします") {
+            alert("ロックする場合は[ロックします]と入力してください");
+            return;
+        } else {
+        const post_url = "/inventory/{{data[5]}}/lock"
+        const data ={"data":inputdata}
+        fetch(post_url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(res_data => {
+                window.location.reload();
+            })
+            .catch(error => console.error(error));
+        }
+
+    }
+
+</script>
+
+<style>
+    #end_set_inventory {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 15%;
+        height: 2.5rem;
+        font-size: 1.5rem;
+        text-align: center;
+        border-radius: 0.5rem;
+        padding: 0.5rem, 0.5rem, 0.5rem, 0.5rem;
+        border: none;
+        background-color: #5e9ede;
+        color: #131313;
+    }
+
+    #end_set_inventory:hover {
+        background-color: #8bb6e1;
+        color: #131313;
+        cursor: pointer;
+    }
+
+    #code_input {
+        width: 30%;
+        height: 50px;
+        font-size: 2rem;
+        text-align: center;
+        border-radius: 10px;
+        border: 1px solid #efefef;
+        background-color: #15202B;
+        color: #efefef;
+        position: absolute;
+        top: 30%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+
+    }
+
+    .overlay {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(21, 32, 43, 0.95);
+        z-index: 99;
+    }
+
+    /* 回転する円 */
+    .loader {
+        display: inline-block;
+        width: 80px;
+        height: 80px;
+        position: relative;
+    }
+
+    .loader div {
+        box-sizing: border-box;
+        display: block;
+        position: absolute;
+        width: 85px;
+        height: 85px;
+        margin: 1rem;
+        border: 8px solid;
+        border-radius: 50%;
+        animation: loader 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+        border-color: #1ebbae transparent transparent transparent;
+    }
+
+    .loader div:nth-child(1) {
+        animation-delay: -0.45s;
+    }
+
+    .loader div:nth-child(2) {
+        animation-delay: -0.3s;
+    }
+
+    .loader div:nth-child(3) {
+        animation-delay: -0.15s;
+    }
+
+    @keyframes loader {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+            opacity: 1;
+        }
+    }
+
+
+    * {
+        color: #efefef;
+    }
+    body {
+        background-color: #15202B;
+        /*border: 1px solid #ee9a00;*/
+    }
+
+    #inventory_data_table {
+        width: 90%;
+        position: absolute;
+        top: 40%;
+        left: 50%;
+        transform: translate(-50%);
+    }
+
+    table {
+        width: 100%;
+        border: #efefef solid 1px;
+    }
+
+    table th {
+        padding: 10px;
+        border: 1px solid #dadada;
+        /*width: 25%;*/
+    }
+
+    table th:nth-child(1) {
+        width: 5%;
+    }
+
+    table th:nth-child(2), table th:nth-child(3), table th:nth-child(5) {
+        width: 15%;
+    }
+
+    table td {
+        padding: 10px;
+        border: 1px solid #dadada;
+        /*width: 25%;*/
+    }
+
+
+    .container {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .box {
+        padding: 10px;
+    }
+
+    #buttons_div button {
+        width: 100%;
+        color: #efefef;
+        background-color: #1f2f3f;
+        border: 1px solid #efefef;
+        height: 2.5rem;
+        border-radius: 5px;
+        margin-right: 20%;
+    }
+
+    #buttons_div button:hover {
+        background-color: #2f3f4f;
+    }
+</style>
+</html>

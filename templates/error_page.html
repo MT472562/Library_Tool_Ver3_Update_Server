@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block head %}
+ <link rel="stylesheet" href="/Library/img_svg_video_icon/style.css">
+<!-- スタイルシート読み込みなさい -->
+{% endblock %}
+{% block body %}
+<div class="error">
+    <h1 class="error_title">{{ title }}</h1>
+    <h2 class="error_msg">{{error}}</h2>
+</div>
+<footer>
+    <br>
+    <a href="https://youtube.com/playlist?list=PLRwpS3a_WpxgzBBoWAzGpbFkMxaIrX7wM&si=uTFAHPGOIsouGIQa">YouTube</a>
+    <a href="https://github.com/MT472562/Library_Tool_Ver3">GitHub</a>
+    <a href="https://github.com/MT472562/Library_Tool_Ver3/blob/main/README.md">README</a>
+    <a href="https://qiita.com/magirawashili/private/0eb97adab73b62e80ad0#%E5%90%84%E3%83%9A%E3%83%BC%E3%82%B8%E3%81%AE%E5%88%A9%E7%94%A8%E6%96%B9%E6%B3%95%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">Manual</a>
+    <a href="https://qiita.com/magirawashili/private/0eb97adab73b62e80ad0">Qiita</a>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/bubbly-bg@1.0.0/dist/bubbly-bg.js"></script>
+<script>bubbly();</script>
+<style>
+    footer {
+        position: fixed;
+        bottom: -5%;
+        width: 100%;
+        height: 15%; /* フッターの高さ */
+        text-align: center;
+    }
+    footer a {
+        font-family: "Times New Roman", Times, serif;
+        text-decoration: none;
+        color: #dcdcdc;
+        font-size: 1.7rem;
+        padding: 1rem;
+        border-radius: 1rem;
+    }
+
+    @import url('https://fonts.googleapis.com/css2?family=M+PLUS+1p&family=Noto+Sans+JP:wght@300;400;500&family=Zen+Maru+Gothic:wght@400;700&display=swap');
+
+
+    body {
+        font-family: 'M PLUS 1p', sans-serif;
+        font-family: 'Noto Sans JP', sans-serif;
+        font-family: 'Zen Maru Gothic', sans-serif;
+    }
+
+    .container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+
+    .box {
+        background: #fff;
+        border-radius: 5px;
+        padding: 20px;
+        text-align: center;
+    }
+
+    a {
+        color: #0bd;
+    }
+
+    header {
+        position: absolute;
+        top: 65%;
+        left: 50%;
+        transform: translate(-50%, 50%);
+        position: fixed;
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+        /*background-color: #1c293a;*/
+        padding: 1rem;
+        border-radius: 1rem;
+
+    }
+
+    header img {
+        zoom: 120%;
+        margin-left: 0.25rem;
+        margin-right: 0.25rem;
+    }
+</style>
+<script>
+    bubbly({
+        colorStart: '#152b3c',
+        colorStop: '#1c293a',
+        blur: 1,
+        compose: 'source-over',
+        bubbleFunc: () => `hsla(${Math.random() * 50}, 100%, 50%, .3)`
+    });
+
+</script>
+{% endblock %}

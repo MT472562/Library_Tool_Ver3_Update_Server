@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block head %}
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/pikaday/css/pikaday.css">
+
+<!-- <link rel="stylesheet" href="/Library/resources/style.css"> -->
+<!-- スタイルシート読み込みなさい -->
+{% endblock %}
+{% block body %}
+<!-- bodyタグに書く内容を書きなさい -->
+<style>
+    ul {
+        list-style-type: none;
+        padding: 0;
+        width: 30%;
+        position: absolute;
+        /*top: 40%;*/
+        left: 50%;
+        transform: translate(-50%);
+        background-color: #223446;
+        padding: 1rem;
+        border-radius: 1rem;
+    }
+
+    li {
+        margin-bottom: 10px;
+        border: 1px solid #ddd;
+        border-radius: 0.5rem;
+        padding: 1rem;
+    }
+
+    form {
+        padding: 1rem;
+        width: 20%;
+        position: fixed;
+        top: 30%;
+        left: 82%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        background-color: #223446;
+        border-radius: 1rem;
+    }
+
+    form p {
+        margin: 0;
+        padding: 0;
+        margin-bottom: 1rem;
+        zoom: 120%;
+    }
+
+    form input {
+        margin-bottom: 1rem;
+        border-radius: 0.5rem;
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+    }
+
+    form select {
+        margin-bottom: 1rem;
+        border-radius: 0.5rem;
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+    }
+
+    form button {
+        margin-bottom: 1rem;
+        border-radius: 0.5rem;
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        background-color: #223446;
+        color: #fff;
+        width: 6rem;
+    }
+
+    form button:hover {
+        background-color: #fff;
+        color: #223446;
+    }
+
+    #reset {
+        position: fixed;
+        top: 5%;
+        left: 97%;
+        transform: translate(-50%, -50%);
+        border: #f1f5fd solid 1px;
+        padding: 0.7rem;
+        border-radius: 1rem;
+    }
+
+    @media screen and (max-width: 1124px) {
+        form {
+            left: 12%;
+        }
+
+        #reset {
+            left: 3%;
+        }
+    }
+</style>
+<ul id="logList"></ul>
+<a href="/db_log"><img id="reset" src="resources/svgs/gomi.svg" style="width: 2.5rem"></a>
+<form>
+    <p>絞り込み</p>
+    <label for="start">開始日付:</label>
+    <input type="date" name="start_date"
+           value="YYYY-MM-DD" max="2999-12-31"
+           placeholder="日付範囲（始め）" id="start">
+    <br>
+    <label for="end">終了日付:</label>
+    <input type="date" name="end_date"
+           value="YYYY-MM-DD" max="2999-12-31"
+           placeholder="日付範囲（終わり）" id="end">
+    <br>
+    <label for="select">保存等級:</label>
+    <select id="select" name="level" style="color: #0a0a0a">
+        <option style="color: #0a0a0a" value="">全て</option>
+        <option style="color: #0a0a0a" value="1">1ヶ月保存</option>
+        <option style="color: #0a0a0a" value="2">1年保存</option>
+        <option style="color: #0a0a0a" value="3">永久保存</option>
+
+    </select>
+    <br>
+    <input name="word" type="text" id="type" value="" placeholder="フリーワードを入力">
+    <br>
+    <button type="submit">検索</button>
+</form>
+<script>
+    <!--    -->
+    var today = new Date();
+    // 年、月、日を取得
+    var year = today.getFullYear();
+    var month = ('0' + (today.getMonth() + 1)).slice(-2);
+    var day = ('0' + today.getDate()).slice(-2);
+
+    // フォーマットを整えて値を設定
+    var defaultValue = year + '-' + month + '-' + day;
+
+    //　　
+    function getQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+    }
+
+    // フォーム要素を取得
+    const form = document.querySelector('form');
+
+    // フォーム要素の各入力フィールドを取得
+    const startDateInput = form.querySelector('input[name="start_date"]');
+    const endDateInput = form.querySelector('input[name="end_date"]');
+    const levelSelect = form.querySelector('select[name="level"]');
+    const wordInput = form.querySelector('input[name="word"]');
+
+    // URLからクエリパラメータを取得して各フィールドに設定
+    startDateInput.value = getQueryParam('start_date') || defaultValue; // クエリがない場合は空文字をセット
+    endDateInput.value = getQueryParam('end_date') || defaultValue;
+    levelSelect.value = getQueryParam('level') || '';
+    wordInput.value = getQueryParam('word') || '';
+
+    logData = {{logData | tojson | safe}};
+    console.log(logData);
+    var logList = document.getElementById('logList');
+
+    logData.forEach(function (log) {
+        var listItem = document.createElement('li');
+        listItem.innerHTML = 'ID: ' + log.id + '<br>' +
+            '日時: ' + log.datetime + '<br>' +
+            '種類: ' + log.type + '<br>' +
+            '関数名: ' + log.function + '<br>' +
+            'ユーザーID: ' + log.user + '<br>' +
+            'レベル: ' + log.level + '<br>' +
+            'メッセージ: ' + log.msg;
+        logList.appendChild(listItem);
+    });
+
+
+</script>
+
+{% endblock %}

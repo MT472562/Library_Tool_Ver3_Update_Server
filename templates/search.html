@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block head %}
+<!-- <link rel="stylesheet" href="/Library/resources/style.css"> -->
+<!-- スタイルシート読み込みなさい -->
+{% endblock %}
+{% block body %}
+<!-- bodyタグに書く内容を書きなさい -->
+<div class="search">
+    <form class="search-form-012">
+        <label>
+            <input type="text" name="k" value="" id="search_book_input" placeholder="検索ワードを入力"
+                   autocomplete="off">
+            <input type="checkbox" id="cb" name="o" value="true">
+            <button  id="submit_button"type="submit" aria-label="検索"></button>
+            <ul id="suggestions" style="z-index: auto"></ul>
+        </label>
+    </form>
+    <h4>チェックを入れると関連ワードで検索できます</h4>
+    <script>
+        const searchInput = document.getElementById('search_book_input');
+        const suggestionsList = document.getElementById('suggestions');
+
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value.trim();
+            if (query === '') {
+                suggestionsList.innerHTML = '';
+            } else {
+                fetch(`/suggest?q=${query}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        suggestionsList.innerHTML = '';
+                        data.forEach(suggestion => {
+                            const li = document.createElement('li');
+                            li.textContent = suggestion;
+                            li.style.color = '#ffffff';
+                            li.style.padding = "10px"
+                            li.href="/search?k="+suggestion;
+                            li.addEventListener('click', () => {
+                                // searchInput.value = suggestion;
+                                window.location.replace(`/search?k=${suggestion}`)
+                            });
+                            li.addEventListener('mouseover', function () {
+                                // マウスオーバー時のスタイルを適用
+                                li.style.backgroundColor = "rgba(29,75,108,0.98)"
+                            });
+
+                            li.addEventListener('mouseout', function () {
+                                // マウスアウト時のスタイルを適用
+                                li.style.backgroundColor = "" // テキストの色を元に戻す（空文字にするとデフォルトのスタイルに戻ります）
+                            });
+                            suggestionsList.appendChild(li);
+                        });
+                    });
+            }
+        });
+    </script>
+
+
+
+</div>
+<style>
+    .search_result table {
+        z-index: 1;
+    }
+
+    .search {
+        z-index: 99;
+    }
+</style>
+<div class="pages" id="pages">
+    <div>
+        <a onclick="page_move(-1)" class="page_number" id="buck_button">＜</a>
+        <a onclick="page_move(+1)" class="page_number" id="next_button">＞</a>
+
+    </div>
+</div>
+<script>
+    var queryString = window.location.search;
+    var queryParams = new URLSearchParams(queryString);
+    var specificParamValue = queryParams.get("p");
+    if ("{{all_book_len}}" == specificParamValue) {
+        document.getElementById("next_button").style.display = "none"
+    } else if (specificParamValue == "1" || specificParamValue == 1 || isNaN(specificParamValue)
+        || specificParamValue == null || specificParamValue == undefined) {
+        document.getElementById("buck_button").style.display = "none"
+    } else {
+        console.log("")
+    }
+
+    var shParamValue = queryParams.get("k");
+    console.log(shParamValue === null)
+    if (shParamValue === null){
+        document.getElementById("pages").style.display = "block"
+    } else if (shParamValue !== "") {
+        document.getElementById("pages").style.display = "none"
+    } else {
+        document.getElementById("pages").style.display = "block"
+    }
+
+
+    function page_move(key) {
+        var queryString = window.location.search;
+        var queryParams = new URLSearchParams(queryString);
+        var specificParamValue = queryParams.get("p");
+        console.log(specificParamValue)
+        if (isNaN(specificParamValue) || specificParamValue == null || specificParamValue == undefined) {
+            specificParamValue = 1;
+        }
+        var new_page = Number(specificParamValue) + key
+        queryParams.set("p", new_page);
+        var newUrl = window.location.origin + window.location.pathname + '?' + queryParams.toString();
+        console.log(newUrl)
+        window.location.href = newUrl;
+    }
+</script>
+<div class="search_result">
+    <table>
+        <thead>
+        <tr>
+            <th colspan="4" style="background-color: #efefef;color: #15202B;">{{ key }}</th>
+        </tr>
+        </thead>
+        <tr>
+            <th id="title">タイトル</th>
+            <th id="author">著者</th>
+            <th id="status">ステータス</th>
+            <th id="book_img">画像</th>
+        </tr>
+        {% for row in result %}
+        <tr>
+            <td class="book_title"><a href="book?code={{ row[0] }}">{{ row[2] }}</a></td>
+            <td class="book_author">{{ row[3] }}</td>
+            <td class="status_img_td">{% if row[4] == true %}
+                <img src="resources/svgs/true.svg" class="true_img">
+                {# <label class="status_label">貸出可能</label>#}
+                {% else %}
+                {{ row[1][5:] }}<br>返却予定
+                {% endif %}
+            </td>
+            <td class="sample_img_td">{% if row[5]=="" %}
+                <a href="https://www.google.com/search?q={{ row[6] }}" target="_blank">
+                    <img class="sample_img" src="resources/svgs/no_image.svg">
+                </a>
+                {% else %}
+                <a href="https://www.google.com/search?q={{ row[6] }}" target="_blank">
+                    <img class="sample_img" src="{{ row[5] }}">
+                </a>
+            </td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+<script>
+    var hit = "{{hit}}"
+    if (hit === "none" && (Number("{{query}}").toString().length === 10 || Number("{{query}}").toString().length === 13)) {
+        top_alert("推奨", "もしかしてISBN検索をしようとしていませんか？\n関連キーワードにチェックを入れて再検索をするか<a href='/search?k={{query}}&o=true'>ここをクリック</a>してください", 5000)
+    } else if (hit === "none"&& Number("{{query}}").toString().length === 8 ) {
+         top_alert("推奨", "もしかして図書管理コードで検索をしようとしていませんか？\n関連キーワードにチェックを入れて再検索をするか<a href='/search?k={{query}}&o=true'>ここをクリック</a>してください", 5000)
+    } else if(hit === "none") {
+        top_alert("お探しの本を見つかりませんでした", "【{{query}}】に一致する本が見つかりませんでした。関連検索を使用していない場合は、チェックマ―クをつけて再度お試しください。" +
+            "\n\nどうしても見つからない場合は、<a href='https://docs.google.com/forms/d/e/1FAIpQLScmVHP9SCA_46zKfQ7qOHPI7n68Zeddyrmk9I0OVwjs2FijZQ/viewform'>お問い合わせフォーム</a>からお問い合わせください。");
+    }
+
+    // URLのクエリパラメータを解析する関数
+    function parseQueryParams() {
+        var queryParams = {};
+        var queryString = window.location.search.substring(1);
+        var pairs = queryString.split('&');
+
+        for (var i = 0; i < pairs.length; i++) {
+            var pair = pairs[i].split('=');
+            var key = decodeURIComponent(pair[0]);
+            var value = decodeURIComponent(pair[1]);
+            queryParams[key] = value;
+        }
+
+        return queryParams;
+    }
+
+    // クエリパラメータの値を取得して要素に設定する関数
+    function setQueryValues() {
+        var queryParams = parseQueryParams();
+
+        if (queryParams.hasOwnProperty('k')) {
+            var searchInput = document.getElementById('search_book_input');
+            searchInput.value = queryParams['k'];
+        }
+
+        if (queryParams.hasOwnProperty('o')) {
+            var searchCheck = document.getElementById('cb');
+            searchCheck.checked = true;
+        }
+    }
+
+
+    // ページの読み込み完了時に処理を実行
+    window.addEventListener('DOMContentLoaded', setQueryValues);
+
+
+
+
+</script>
+{% endblock %}

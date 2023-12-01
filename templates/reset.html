@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block head %}
+<!-- <link rel="stylesheet" href="/Library/resources/style.css"> -->
+<!-- スタイルシート読み込みなさい -->
+{% endblock %}
+{% block body %}
+<div class="overlay" id="overlay" style="display:none">
+    <div id="input_email" style="display: none">
+        <p style="position: absolute;top: 20%;left: 50%;transform: translate(-50%, -50%);">
+            メールアドレスを入力してください</p>
+        <input type="email" id="input_email_address" name="email" placeholder="メールアドレス"
+               style="width: 20rem;height: 2rem;font-size: 1.1rem;
+               position: absolute;top: 30%;left: 50%;transform: translate(-50%, -50%);">
+        <button onclick="account_check_post()" type="button"
+                style="position: absolute;top: 40%;left: 50%;transform: translate(-50%, -50%);border: none;
+background-color: #ff9327;width: 10%;font-size: 1.3rem;height: 2.5rem;color: #FFFFFF;border-radius: 1rem">送信
+        </button>
+    </div>
+    <div class="loader">
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+</div>
+<div id="reset_account">
+    <h3>パスワードリセット</h3>
+    <form>
+        <input name="email" id="mail" type="email" placeholder="アカウントのメールアドレス">
+        <input name="userid" id="user_id" type="text" placeholder="ユーザーID">
+        <button onclick="reset_account_check_post()" type="button">確認メール送信</button>
+        <br>
+        <a style="color: #15202B;border-bottom:1px solid;" onclick="ck_ac_id()">ユーザー名がわかりません</a>
+        <style>
+            a {
+                cursor: default;
+            }
+        </style>
+    </form>
+</div>
+<div class="verification-code-input" id="reset_number" style="display:none">
+    <h3>メールを確認しURLからリセットを行ってください</h3>
+    <h3>【メールが届かない場合】</h3>
+    <h4>・メール到着に数分かかる場合があります</h4>
+    <h4>・迷惑メールフォルダをご確認ください</h4>
+    <button type="button" class="btn"><a href="/" rel="noopener noreferrer">閉じる</a>
+    </button>
+</div>
+
+<script>
+    function ck_ac_id() {
+        document.getElementById("overlay").style.display = "block";
+        document.getElementById("input_email").style.display = "block";
+        document.getElementById("overlay").style.zIndex = "99";
+        document.getElementById("input_email").style.zIndex = "899";
+
+
+    }
+
+    async function account_check_post() {
+        const input_email_address = document.getElementById("input_email_address").value;
+        if (input_email_address == "") {
+            top_alert("エラー", "メールアドレスを入力してください", 5000);
+            return;
+        }
+        top_alert("確認", "確認作業中です　少々お待ちください", 5000);
+        document.getElementById("input_email").style.display = "none";
+
+        async function fetchData1() {
+            const response = await fetch('/account_id_check', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    mailaddress: input_email_address
+                })
+            });
+
+            const data = await response.json();
+
+            if (data["status"] == true) {
+                document.getElementById("overlay").style.display = "none";
+                document.getElementById("input_email").style.display = "none";
+                top_alert("確認", "ユーザー名を確認したので、入力いただいたメールアドレスにメールを送信しました。", 5000);
+            } else {
+                top_alert("エラー", "このメールアドレスは使用することができません。", 5000);
+                document.getElementById("overlay").style.display = "none";
+                document.getElementById("input_email").style.display = "none";
+            }
+        }
+
+        await fetchData1()
+
+    }
+
+    async function reset_account_check_post() {
+        const mailaddress = document.getElementById("mail").value;
+        const userid = document.getElementById("user_id").value;
+        document.getElementById("overlay").style.display = "block";
+
+        async function fetchData() {
+            const response = await fetch('/reset_account_check', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    mailaddress: mailaddress,
+                    userid: userid
+                })
+            });
+
+            const data = await response.json();
+
+            if (data["status"] == true) {
+                document.getElementById("overlay").style.display = "block";
+                document.getElementById("reset_number").style.display = "block";
+                // return data["random_hash"];
+            } else {
+                document.getElementById("overlay").style.display = "none";
+                top_alert("エラー", "正しいメールアドレスとユーザーIDを入力してください\n" +
+                    "もし、わからない場合は、図書委員に声をかけてください", 5000);
+            }
+        }
+
+        await fetchData()
+    }
+
+</script>
+
+<!-- bodyタグに書く内容を書きなさい -->
+{% endblock %}

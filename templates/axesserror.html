@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block head %}
+<!-- <link rel="stylesheet" href="/Library/resources/style.css"> -->
+<!-- スタイルシート読み込みなさい -->
+{% endblock %}
+{% block body %}
+<!-- bodyタグに書く内容を書きなさい -->
+<footer style="position: absolute;top: 100%;left: 50%;transform: translate(-50%, -50%);">
+    <a href="https://youtube.com/playlist?list=PLRwpS3a_WpxgzBBoWAzGpbFkMxaIrX7wM&si=uTFAHPGOIsouGIQa">YouTube</a>
+    <a href="https://github.com/MT472562/Library_Tool_Ver3">GitHub</a>
+    <a href="https://github.com/MT472562/Library_Tool_Ver3/blob/main/README.md">README</a>
+    <a href="https://qiita.com/magirawashili/private/0eb97adab73b62e80ad0#%E5%90%84%E3%83%9A%E3%83%BC%E3%82%B8%E3%81%AE%E5%88%A9%E7%94%A8%E6%96%B9%E6%B3%95%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">Manual</a>
+    <a href="https://qiita.com/magirawashili/private/0eb97adab73b62e80ad0">Qiita</a>
+</footer>
+<div id="error_msg">
+    <h1 class="m_msg">エラーが発生しました。</h1>
+    <h2 class="m_msg">エラーメッセージ
+        <br>「{{ msg }}」
+    </h2>
+    <h3 class="m_msg">エラーコード<br>「 {{ errorid }} 」</h3>
+    <h3 class="m_msg">あと、<span class="m_msg" id="countdown">120</span>秒でページ移動します。</h3>
+    <h3 class="m_msg"><a onclick="page_out()" class="m_msg">ページを移動</a></h3>
+    <h3 class="m_msg"><a class="m_msg"
+                         href="https://github.com/MT472562/Library_Tool_Ver3/blob/main/README.md#エラーidの種類と対処方法">詳細を確認</a>
+    </h3>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bubbly-bg@1.0.0/dist/bubbly-bg.js"></script>
+<script>bubbly();</script>
+<script>
+function page_out() {
+    if ("{{ errorid }}".charAt(3) === "1" || "{{ errorid }}".charAt(3) === "2") {
+        window.location.href = '/login';
+    } else {
+        window.location.href = '/';
+    }
+}
+
+var count = 120;
+
+var countdown = setInterval(function () {
+    count--;
+    document.getElementById('countdown').textContent = count;
+    if (count == 0) {
+        clearInterval(countdown);
+        page_out();
+    }
+}, 1000);
+</script>
+<style>
+    @import url('https://fonts.googleapis.com/css?family=Merienda');
+
+    body {
+        font-family: 'Merienda', cursive;
+    }
+
+    .container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+
+    .box {
+        background: #fff;
+        border-radius: 5px;
+        padding: 20px;
+        text-align: center;
+    }
+</style>
+<script>
+    bubbly({
+        colorStart: '#152b3c',
+        colorStop: '#1c293a',
+        blur: 1,
+        compose: 'source-over',
+        bubbleFunc: () => `hsla(${Math.random() * 50}, 100%, 50%, .3)`
+    });
+
+</script>
+{% endblock %}

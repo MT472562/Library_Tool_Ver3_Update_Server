@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block head %}
+<!-- <link rel="stylesheet" href="/Library/resources/style.css"> -->
+<!-- スタイルシート読み込みなさい -->
+{% endblock %}
+{% block body %}
+<!-- bodyタグに書く内容を書きなさい -->
+<div class="overlay" id="overlay" style="display:none">
+    <div style="display: none" id="point_operation_input">
+        <input placeholder="ポイント数を入力" type="number" id="new_point_data">
+        <button id="point_operation_cancel" class="user_setting_cancel" onclick="calnsel()">キャンセル</button>
+        <button id="point_operation_ok" class="user_setting_ok">確定</button>
+    </div>
+    <div style="display: none" id="mail_transmission_input">
+        <p id="management_user_id"></p>
+        <p id="user_name_mail"></p>
+        <input placeholder="件名を入力" id="mail_transmission_subject">
+        <textarea cols="50" rows="8" id="mail_transmission_mail_text"></textarea></p>
+        <button id="mail_transmission_cancel" class="user_setting_cancel" onclick="calnsel()">キャンセル</button>
+        <button id="mail_transmission_ok" class="user_setting_ok">送信</button>
+    </div>
+    <div class="loader">
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+</div>
+<table id="user_setting_tabel">
+    <thead>
+    <tr>
+        <th>管理ID</th>
+        <th>ユーザーID</th>
+        <th>ユーザー名</th>
+        <th>レベル</th>
+        <th>メールアドレス</th>
+        <th>ポイント</th>
+        <th>ポイント操作</th>
+        <th>メール送信</th>
+    </tr>
+
+
+    <tbody>
+    {% for item in data %}
+    <tr>
+        <td>{{item[0]}}</td>
+        <td>{{item[1]}}</td>
+        <td>{{item[3]}}</td>
+        <td>{{item[4]}}</td>
+        <td>{{item[5]}}</td>
+        <td>{{item[6]}}</td>
+        <td>
+            <button id="point_operation" onclick="point_operation('{{item[0]}}')">ポイント操作</button>
+        </td>
+        <td>
+            <button id="mail_transmission" onclick="mail_transmission('{{item[0]}}','{{item[3]}}')">メール送信</button>
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+
+</table>
+
+<script>
+
+
+    function point_operation(id) {
+        document.getElementById('overlay').style.display = 'block';
+        document.getElementById("point_operation_input").style.display = 'block';
+        document.getElementById("point_operation_ok").onclick = function () {
+            var new_point = document.getElementById("new_point_data").value;
+            console.log(new_point);
+            var post_url = "user_setting/point_operation";
+            var post_data = {
+                "primary_userid": id,
+                "new_point": new_point
+            }
+            fetch(post_url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(post_data)
+            })
+                .then(response => response.json())
+                .then(res_data => {
+                    console.log(res_data);
+                    if (res_data["res_data"]["status"] == 200) {
+                        alert(res_data["res_data"]["message"]);
+                        document.getElementById('overlay').style.display = 'none';
+                        document.getElementById("point_operation_input").style.display = 'none';
+                        document.getElementById("new_point_data").value = "";
+                        window.location.reload();
+                    } else {
+                        alert(res_data["res_data"]["message"]);
+                        document.getElementById('overlay').style.display = 'none';
+                        document.getElementById("point_operation_input").style.display = 'none';
+                        document.getElementById("new_point_data").value = "";
+                    }
+                })
+                .catch(error => console.error(error));
+        }
+
+    }
+
+    function mail_transmission(id,username) {
+        document.getElementById('overlay').style.display = 'block';
+        document.getElementById("mail_transmission_input").style.display = 'block';
+        document.getElementById("management_user_id").innerHTML = "管理ID: "+id+"番へのメール送信";
+        document.getElementById("user_name_mail").innerHTML = "ユーザー : "+username+"様へのメール送信"
+        console.log(id);
+        document.getElementById("mail_transmission_mail_text").value = username+"様\n\n"+"--------------\n本文を入力してください\n--------------\n\n図書管理システムのご利用に際して不明な点やお困りのことがございましたら、\n" +
+            "いつでもサポートチームまでお問い合わせください。\n\n" +
+            "図書管理システムサポートチーム\nお問合せ先:https://forms.gle/hYsSKbNmjnPbUfyBA";
+        document.getElementById("mail_transmission_subject").value = "【図書管理システム】"
+        document.getElementById("mail_transmission_ok").onclick = function () {
+            var mail_subject = document.getElementById("mail_transmission_subject").value;
+            var mail_text = document.getElementById("mail_transmission_mail_text").value;
+            document.getElementById("mail_transmission_input").style.display = 'none';
+            var result = confirm("送信データはこの様になっています。誤りのないか確認してください。\n―――――――――――――――――――――――――――――――\n" +
+                "件名：" + mail_subject + "\n―――――――――――――――――――――――――――――――\n" +
+                "本文：\n" + mail_text + "\n\n―――――――――――――――――――――――――――――――\n" +
+                "本当に送信しますか？");
+            if (result) {
+                result2 = prompt("送信対象の管理IDを入力してください。");
+                if (id == result2) {
+                    var post_url = "user_setting/mail_transmission";
+                    var post_data = {
+                        "primary_userid": id,
+                        "mail_subject": mail_subject,
+                        "mail_text": mail_text
+                    }
+                    fetch(post_url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(post_data)
+                    })
+                        .then(response => response.json())
+                        .then(res_data => {
+                            console.log(res_data);
+                            if (res_data["res_data"]["status"] == 200) {
+                                alert(res_data["res_data"]["message"]);
+                                document.getElementById('overlay').style.display = 'none';
+                                document.getElementById("mail_transmission_input").style.display = 'none';
+                                document.getElementById("mail_transmission_subject").value = "";
+                                document.getElementById("mail_transmission_mail_text").value = "";
+                                window.location.reload();
+                            } else {
+                                alert(res_data["res_data"]["message"]);
+                                document.getElementById('overlay').style.display = 'none';
+                                document.getElementById("mail_transmission_input").style.display = 'none';
+                                document.getElementById("mail_transmission_subject").value = "";
+                                document.getElementById("mail_transmission_mail_text").value = "";
+                            }
+                        })
+                        .catch(error => console.error(error));}
+                else {
+                    alert("管理IDが一致しません。");
+                    document.getElementById("mail_transmission_input").style.display = 'block';
+
+                }
+                } else {
+                    document.getElementById("mail_transmission_input").style.display = 'block';
+                }
+            }
+
+        }
+
+        function calnsel() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById("point_operation_input").style.display = 'none';
+            document.getElementById("mail_transmission_input").style.display = 'none';
+            document.getElementById("new_point_data").value = "";
+            document.getElementById("mail_transmission_subject").value = "";
+            document.getElementById("mail_transmission_mail_text").value = "";
+
+        }
+</script>
+<style>
+    header,.grid-container {
+        display: none;
+    }
+
+</style>
+
+{% endblock %}

@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block head %}
+<!-- <link rel="stylesheet" href="/Library/resources/style.css"> -->
+<!-- スタイルシート読み込みなさい -->
+{% endblock %}
+{% block body %}
+<!-- bodyタグに書く内容を書きなさい -->
+<div class="overlay" id="overlay" style="display:none">
+    <button id="reload" onclick="reloadPage()">再読み込み</button>
+    <div class="loader">
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+</div>
+<div class="inventory_menu">
+    <div class="new_inventory">
+        <button id="new_take_inventory" onclick="new_inventory()">新規棚卸し</button>
+        <hr>
+    </div>
+    <div class="inventory_about">
+        <h3>棚卸しデータ一覧　降順</h3>
+        <table id="inventory_tabel">
+            <thead>
+            <tr>
+                <th id="inventory_tabel_id">ID</th>
+                <th id="inventory_tabel_name">名前</th>
+                <th id="inventory_tabel_date">設計日付</th>
+                <th id="inventory_tabel_last_update">最終更新日</th>
+                <th id="inventory_tabel_status">ロック状態</th>
+                <th>編集</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for item in data %}
+            <tr>
+                <td>{{ item[0] }}</td>
+                <td>{{ item[1] }}</td>
+                <td>{{ item[2] }}</td>
+                <td>{{ item[4] }}</td>
+                {% if item[3] == 1 %}
+                <td style="color: #00c2ff">🔓ロック解除</td>
+                {% else %}
+                <td style="color: #ff3c3c">🔐ロック済み</td>
+                {% endif %}
+                {% if item[3] == 1 %}
+                <td>
+                    <button class="edit-button" onclick="edit('{{ item[5] }}')">編集</button>
+                </td>
+                {% else %}
+                <td style="color: #ff3c3c" onclick="edit('{{ item[5] }}')" )>編集不可</td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function reloadPage() {
+        window.location = "./inventory?s=true";
+    }
+
+    function edit(hash) {
+        document.getElementById("overlay").style.display = "block";
+        document.getElementById("reload").style.display = "none";
+        for (let i = 5; i > 0; i--) {
+            (function (count) {
+                setTimeout(function () {
+                    document.getElementById("count").innerHTML = count;
+                }, (5 - count) * 1000);
+            })(i);
+        }
+
+        var message = `リクエスト処理中です...\n棚卸しページにあと<span id="count">5</span>秒後に移動します。\n移動しない場合は、<a href="/inventory/${hash}">こちら</a>をクリックしてください。`;
+        top_alert("【情報】", message, 99999);
+        setTimeout(function () {
+            window.location = `/inventory/${hash}`;
+        }, 5000);
+
+    }
+
+    function new_inventory() {
+        const currentQuery = window.location.search;
+        if (currentQuery === "?s=true") {
+            top_alert("重要な確認", "先程新規登録された模様ですが、一覧に登録データはありませんか？", 5000);
+            return
+        } else {
+            ;
+        }
+        var name = window.prompt("棚卸の名前を追加してください", "");
+        if (name === null) {
+            // The user clicked the Cancel button
+            top_alert("情報", "新規棚卸し登録処理をキャンセルしました", 5000);
+            return;
+        }
+
+        if (name === "") {
+            top_alert("エラー", "棚卸の名前を入力してください", 5000);
+            return;
+        }
+        document.getElementById("overlay").style.display = "block";
+        data = {
+            name: name
+        };
+
+        post_url = "/new_inventory";
+        fetch(post_url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(statusData => {
+
+                top_alert("【重要情報】", statusData, 8000);
+
+
+            })
+            .catch(error => console.error(error));
+
+
+    }
+
+</script>
+{% endblock %}

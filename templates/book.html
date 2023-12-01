@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% block head %}
+<!-- <link rel="stylesheet" href="/Library/resources/style.css"> -->
+<!-- スタイルシート読み込みなさい -->
+<meta name="twitter:site" content="Library-Management"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="【{{ book_title }}】の詳細--NS高図書管理システム"/>
+<meta name="twitter:description"
+      content="{{book_hedline}}"/>
+
+<meta name="twitter:image"
+      content="{{ book_sample_url }}"/>
+
+{% endblock %}
+{% block body %}
+<!-- bodyタグに書く内容を書きなさい -->
+<div id="book_data">
+    {% if book_sample_url == "" %}
+    <img src="resources/svgs/no_image.svg">
+    {% else %}
+    <img src="{{ book_sample_url }}">
+    {% endif %}
+    <button onclick="rental_book_book_page()" id="lental_book_button_bookpage">貸出する</button>
+
+    <table id="tabele_book">
+        <tr>
+            <th class="left">タイトル</th>
+            <td class="right">{{ book_title }}</td>
+        </tr>
+        <tr>
+            <th class="left">著作者</th>
+            <td class="right">{{ book_author }}</td>
+        </tr>
+        <tr>
+            <th class="left">ページ数</th>
+            <td class="right">{{ book_number_of_pages }}</td>
+        </tr>
+        <tr>
+            <th class="left">詳細を調べる</th>
+            {% if book_isbn == 0 or book_isbn == "0" or book_isbn == "" %}
+            <td class="right"><a target="_blank"
+                                 href="https://www.google.com/search?q={{ book_title }}">Googleで検索</a></td>
+            {% else %}
+            <td class="right"><a target="_blank" href="https://www.google.com/search?q={{ book_isbn }}">Googleで検索</a>
+            </td>
+            {% endif %}
+
+        </tr>
+        <tr>
+            <th class="left">管理コード</th>
+            <td class="right">{{ book_managementcode }}</td>
+        </tr>
+        <tr>
+            <th class="left">ISBN</th>
+            {% if book_isbn == 0 or book_isbn == "0" or book_isbn == "" %}
+            <td class="right">ISBN未登録</td>
+            {% else %}
+            <td class="right">{{ book_isbn }}</td>
+            {% endif %}
+
+        </tr>
+        <tr>
+            <th class="left">貸出状況</th>
+            {% if book_stock == 1 %}
+            <td class="right">在庫あり</td>
+            {% else %}
+            <td class="right">貸出中</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <th class="left">返却予定日</th>
+            {% if book_stock == 1 %}
+            <td class="right">本棚にあります</td>
+            {% else %}
+            <td class="right">{{ book_last_rental_date }}</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <th class="left">見出し文</th>
+            <td class="right" id="book_hedline">{{ book_hedline }}</td>
+        </tr>
+
+    </table>
+</div>
+<script>
+    var book_data = [];
+    let session = "{{ session['username'] }}";
+    let stock = "{{ book_stock }}";
+    const lentalButton = document.getElementById("lental_book_button_bookpage");
+
+    if (stock === "0" || stock === 0) {
+        lentalButton.style.backgroundColor = "#c25b2a";
+        lentalButton.style.border = "#9027ff 1.5px solid";
+        lentalButton.textContent = "　貸出中です　";
+    } else if (!session) {
+        lentalButton.style.backgroundColor = "#3499d5";
+        lentalButton.textContent = "　ログインして貸出　";
+        // lentalButton.style.textDecoration = "line-through";
+    }
+
+    async function rental_book_book_page() {
+        const code = "{{ book_managementcode }}";
+        const stock = "{{ book_stock }}";
+        const session = "{{ session['username'] }}";
+
+        if (stock === "0" || stock === 0) {
+            top_alert("エラー", "貸出中の本は貸出できません\n返却を待ってください", 5000);
+            return;
+        }
+
+        if (!session) {
+            const message = "ログインが必要になります\n<span id=\"count\">5</span>秒後にページ移動します\nもしページが移動しない場合は " +
+                `<a href='/account?re_url=/book?code=${code}&msg=本の詳細ページからの貸出にはサインインが必要です'>こちら</a>からログインしてください`;
+
+            top_alert("【情報】", message, 99999);
+            for (let i = 5; i > 0; i--) {
+                setTimeout(function () {
+                    document.getElementById("count").innerHTML = i;
+                }, (5 - i) * 1000);
+            }
+            setTimeout(function () {
+                window.location = `/account?re_url=/book?code=${code}&msg=本の詳細ページからの貸出にはサインインが必要です`;
+            }, 5000);
+            return;
+        }
+
+        const post_url = "/rental_book_set";
+        const book_data = [{
+            title: "{{ book_title }}",
+            book_code: code
+        }];
+
+        try {
+            top_alert("貸出処理中", `${session} さんのアカウントで貸出処理中です。\n少々お待ち下さい`, 3000);
+            const response = await fetch(post_url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    book_data: book_data
+                })
+            });
+            const data = await response.json();
+
+            if (data["status"] === true) {
+                top_alert("貸出完了", `${session} さんのアカウントで貸出完了しました。\n登録いただいたメールアドレスにメールを送信しています。\n返却手続きなどは、メールを確認してください。`, 5000);
+                location.reload();
+            } else {
+                window.location.href = "/error?e=10";
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+
+function isMobileOrTablet() {
+    const userAgent = navigator.userAgent.toLowerCase();
+    const mobileKeywords = ['iphone', 'ipod', 'android', 'blackberry', 'opera mini', 'windows phone', 'iemobile'];
+    const tabletKeywords = ['ipad', 'android tablet', 'kindle'];
+
+    for (const keyword of mobileKeywords) {
+        if (userAgent.indexOf(keyword) !== -1) {
+            return true;
+        }
+    }
+
+    for (const keyword of tabletKeywords) {
+        if (userAgent.indexOf(keyword) !== -1) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+if (isMobileOrTablet()) {
+    document.getElementById("tabele_book").style.zoom="80%"
+}
+
+
+</script>
+{% endblock %}
+

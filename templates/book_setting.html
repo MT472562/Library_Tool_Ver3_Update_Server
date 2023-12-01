@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Database Editor</title>
+    <style>
+        *{
+            color: #efefef;
+        }
+        body {
+            background-color: #343541;
+
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            text-align: left;
+            padding: 0.5rem;
+            border: 1px solid #30eeff;
+            max-height: 3rem;
+            overflow: hidden;
+        }
+        input[type="submit"] {
+            padding: 0.5rem;
+            margin: 0;
+            border: none;
+            background-color: #36abf4;
+            color: white;
+            cursor: pointer;
+            border-radius: 0.5rem;
+        }
+        input[type="submit"]:hover {
+            background-color: #2f63d3;
+        }
+        .truncate {
+            max-width: 5rem;
+            white-space: nowrap; /* 表示領域を超えたテキストを折り返さない */
+            overflow: hidden; /* 表示領域を超えたテキストを隠す */
+            text-overflow: ellipsis; /* 超えたテキストを省略記号(...)に置き換える */
+            word-wrap: break-word; /* テキストを折り返す */
+
+        }
+        table {
+            max-width: 90%;
+            position: absolute;
+            left: 50%;
+            transform: translate(-50%);
+
+        }
+    </style>
+</head>
+<body>
+<table>
+    <thead>
+    <tr>
+        <th>管理コード</th>
+        <th>ISBNコード</th>
+        <th>在庫</th>
+        <th>最終貸出日</th>
+        <th>書籍タイトル</th>
+        <th>著者</th>
+        <th>見出し</th>
+        <th>サンプルURL</th>
+        <th>ページ数</th>
+        <th>発売日</th>
+        <th>登録</th>
+        <th style="width: 100px;">操作</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for row in data %}
+    <tr>
+        {% for value in row %}
+        <td class="truncate">{{ value }}</td>
+        {% endfor %}
+        <td>
+            <form method="POST" action="/setting_books" >
+                <input type="hidden" name="management_code" value="{{ row[0] }}">
+                <input type="submit" value="変更">
+            </form>
+
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</body>
+</html>

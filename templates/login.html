@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block head %}
+<!-- <link rel="stylesheet" href="/Library/resources/style.css"> -->
+<!-- スタイルシート読み込みなさい -->
+{% endblock %}
+{% block body %}
+<!-- bodyタグに書く内容を書きなさい -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<div id="login_form">
+    <form method="post" action="/login">
+        <input id="user_id" name="userid" onkeydown="next_pw(event)" placeholder="ユーザーIDを入力" type="text"
+               autocomplete="off"><br>
+        <input id="user_password" name="password" placeholder="パスワードを入力" type="password" autocomplete="off"
+               onkeydown="next_button(event)"><br>
+        <button type="button" onclick="login()" id="login_button" value="Login">サインイン</button>
+    </form>
+    <a href="/reset_account">パスワードを忘れました</a>
+    <br>
+    <a href="/new_account">アカウントを持っていません</a>
+</div>
+<script>
+    function next_pw(event) {
+        if (event.key === 'Enter') {
+            document.getElementById("user_password").focus();
+        }
+    }
+
+    function next_button(event) {
+        if (event.key === 'Enter') {
+            document.getElementById("login_button").click();
+        }
+
+    }
+    function login() {
+        const user_id = document.getElementById("user_id").value;
+        const user_password = document.getElementById("user_password").value;
+        if (user_id == "" && user_password == "") {
+            top_alert("エラー", "ユーザーIDとパスワードを入力してください", 5000);
+            return;
+        } else if (user_id == "") {
+            top_alert("エラー", "ユーザーIDを入力してください", 5000);
+            return;
+        } else if (user_password == "") {
+            top_alert("エラー", "パスワードを入力してください", 5000);
+            return;
+        }
+        let user_password_hash = CryptoJS.SHA512(user_password).toString();
+        let login_point = "/login";
+        let login_data = {
+            "userid": user_id,
+            "password": user_password_hash,
+            "redirect": "/account"
+        };
+
+        fetch(login_point, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(login_data),
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                }
+                return response.json();
+            })
+            .then((res) => {
+                var st = res["res"]["st"];
+                var msg = res["res"]["msg"];
+                var redirect = res["res"]["url"];
+                if (st === "False") {
+                    top_alert("エラー", msg, 5000);
+                    return;
+                } else {
+                    top_alert("情報", msg, 500);
+                    setTimeout(function () {
+                        window.location = redirect;
+                    }, 500);
+                }
+
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+            });
+
+
+    };
+    document.getElementById("user_id").focus();
+
+
+</script>
+{% endblock %}

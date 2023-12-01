@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block head %}
+<!-- <link rel="stylesheet" href="/Library/resources/style.css"> -->
+<!-- スタイルシート読み込みなさい -->
+{% endblock %}
+{% block body %}
+<!-- bodyタグに書く内容を書きなさい -->
+<div id="new_book_form">
+    <form id="input_new_book_from" method="POST" action="/db_commit">
+        <input type="number"
+               value="" autocomplete="off" maxlength="8"
+               placeholder="管理番号" id="input_management_code">
+
+        <input type="number"
+               value="" autocomplete="off" maxlength="13"
+               placeholder="ISBN" id="input_isbn_code" onkeyup="book_data()">
+
+
+        <div id="api_res">
+            <div>
+                <input type="text" id="api_book_title" autocomplete="off" placeholder="タイトルを入力">
+                <input type="text" id="api_book_author" autocomplete="off" placeholder="著者を入力">
+            </div>
+            <div>
+                <input type="text" id="api_book_headline" autocomplete="off" placeholder="見出し分を入力">
+                <input type="url" id="api_book_sample_img" autocomplete="off" placeholder="サンプル画像を入力">
+            </div>
+            <div>
+                <input type="number" id="api_book_page" autocomplete="off" placeholder="ページ数を入力">
+                <input type="text" id="api_book_release" autocomplete="off" placeholder="公開日を入力">
+            </div>
+        </div>
+        <button id="new_book_list_append" type="button" onclick="append_database()">DBに追加</button>
+    </form>
+</div>
+<div id="check_new_book">
+
+</div>
+<script>
+
+    top_alert("最終登録データ","最終登録データは{{ last_book[0] }}です\n通知をタップして非表示にできます。",9999999999)
+
+    function book_data() {
+        let isbn_code = document.getElementById("input_isbn_code").value;
+        let url = `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn_code}`;
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                let volumeInfo = data.items[0].volumeInfo;
+                let book_title_api = volumeInfo.title || '';
+                let book_author_api = volumeInfo.authors?.[0] || '';
+                let book_headline_api = volumeInfo.description || '';
+                let book_thumbnail_api = volumeInfo.imageLinks?.smallThumbnail || '';
+                let book_page_api = volumeInfo.pageCount || '';
+                let book_release_api = volumeInfo.publishedDate || '';
+
+                let input_form_title = document.getElementById("api_book_title");
+                let input_form_author = document.getElementById("api_book_author");
+                let input_form_headline = document.getElementById("api_book_headline");
+                let input_form_sample_img = document.getElementById("api_book_sample_img");
+                let input_form_page = document.getElementById("api_book_page");
+                let input_form_release = document.getElementById("api_book_release");
+                input_form_title.value = book_title_api;
+                input_form_author.value = book_author_api;
+                input_form_headline.value = book_headline_api;
+                input_form_sample_img.value = book_thumbnail_api;
+                input_form_page.value = book_page_api;
+                input_form_release.value = book_release_api;
+
+            })
+    }
+
+    function submitForm() {
+        const form = document.createElement('form');
+        const domain = window.location.hostname;
+        console.log(domain);
+        // if (domain === "127.0.0.1") {
+        form.action = '/db_commit'; // 送信先のURLを設定
+        // } else {
+        //     form.action = 'https://magenta.cocotte.jp/Library/db_commit'; // 送信先のURLを設定
+        // }
+        form.method = 'POST'; // 送信方法を設定
+
+        const managementCode = document.getElementById('input_management_code').value;
+        const isbnCode = document.getElementById('input_isbn_code').value;
+        const bookTitle = document.getElementById('api_book_title').value;
+        const bookAuthor = document.getElementById('api_book_author').value;
+        const bookHeadline = document.getElementById('api_book_headline').value;
+        const bookSampleImg = document.getElementById('api_book_sample_img').value;
+        const bookPage = document.getElementById('api_book_page').value;
+        const bookRelease = document.getElementById('api_book_release').value;
+
+        // input要素を作成してフォームに追加
+        const input1 = document.createElement('input');
+        input1.type = 'number';
+        input1.name = 'managementCode';
+        input1.value = managementCode;
+        form.appendChild(input1);
+
+        const input2 = document.createElement('input');
+        input2.type = 'number';
+        input2.name = 'isbnCode';
+        input2.value = isbnCode;
+        form.appendChild(input2);
+
+        const input3 = document.createElement('input');
+        input3.type = 'text';
+        input3.name = 'bookTitle';
+        input3.value = bookTitle;
+        form.appendChild(input3);
+
+        const input4 = document.createElement('input');
+        input4.type = 'text';
+        input4.name = 'bookAuthor';
+        input4.value = bookAuthor;
+        form.appendChild(input4);
+
+        const input5 = document.createElement('input');
+        input5.type = 'text';
+        input5.name = 'bookHeadline';
+        input5.value = bookHeadline;
+        form.appendChild(input5);
+
+        const input6 = document.createElement('input');
+        input6.type = 'url';
+        input6.name = 'bookSampleImg';
+        input6.value = bookSampleImg;
+        form.appendChild(input6);
+
+        const input7 = document.createElement('input');
+        input7.type = 'number';
+        input7.name = 'bookPage';
+        input7.value = bookPage;
+        form.appendChild(input7);
+
+        const input8 = document.createElement('input');
+        input8.type = 'text';
+        input8.name = 'bookRelease';
+        input8.value = bookRelease;
+        form.appendChild(input8);
+
+        document.body.appendChild(form);
+        form.submit(); // フォームをサブミット
+    }
+
+    function append_database() {
+        let managementCode = document.getElementById("input_management_code").value;
+        let isbnCode = document.getElementById("input_isbn_code").value;
+        let bookTitle = document.getElementById("api_book_title").value;
+        let bookAuthor = document.getElementById("api_book_author").value;
+        let bookSampleImg = document.getElementById("api_book_sample_img").value;
+        let bookPage = document.getElementById("api_book_page").value;
+        let bookRelease = document.getElementById("api_book_release").value;
+        let bookHeadline = document.getElementById("api_book_headline").value;
+        if (managementCode === "" || isbnCode === "" || bookTitle === "" || bookAuthor === "" || bookSampleImg === "" || bookPage === "" || bookRelease === "") {
+            alert("登録情報が正しくありません");
+        } else if (isbnCode.length !== 10 && isbnCode.length !== 13) {
+            alert("ISBNコードは10桁または13桁で入力してください");
+        } else if (managementCode.length !== 8) {
+            alert("管理コードは8桁で入力してください");
+        } else if (isbnCode.charAt(0) !== '9' && isbnCode.charAt(0) !== '4') {
+            alert("ISBNの形式が正しくありません");
+        } else if (managementCode.charAt(0) !== "1") {
+            alert("管理コードの形式が正しくありません");
+        } else if ("{{ db_management_list }}".includes(managementCode)) {
+            alert("管理コードがすでに使用済みです。\nこの管理コードは使用できません")
+        } else {
+            if (confirm("OKを押すとDATABASEに登録処理がされます。\n本当に情報に誤りがないですか？")) {
+                // ユーザーがOKをクリックした場合に実行する処理を記述
+                submitForm();
+            } else {
+                // ユーザーがキャンセルをクリックした場合に実行する処理を記述
+                alert("処理を中断しました。\n再度登録する場合は登録ボタンを押してください")
+            }
+
+
+        }
+    }
+</script>
+
+{% endblock %}

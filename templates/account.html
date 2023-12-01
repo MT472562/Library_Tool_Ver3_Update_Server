@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block head %}
+<!-- <link rel="stylesheet" href="/Library/resources/style.css"> -->
+<!-- スタイルシート読み込みなさい -->
+{% endblock %}
+{% block body %}
+<!-- bodyタグに書く内容を書きなさい -->
+<div id="account_manager">
+    <h1>{{ session['username'] }}さんのアカウント設定</h1>
+    <p>ユーザー名:{{ session['username'] }}</p>
+    <p>ユーザーID:{{ session['userid'] }}</p>
+    <p>メールアドレス:{{ session['mail'] }}</p>
+    <p>アクセスレベル:{{ session['access_level'] }}</p>
+    <p>ポイント:{{ session['point']}}</p><p style="zoom: 80%"></p>
+    <div id="account_button_div">
+        <a href="/logout">
+            <button id="log_out_button">サインアウト</button>
+        </a>
+        <a href="/account_edit"><button id="edit_account_button">情報更新</button></a>
+    {% if session['access_level'] == 4 or session['access_level'] == 5 %}
+        <a href="/setting"><button id="db_setting_button">管理者ページ</button></a>
+    {% endif %}
+    </div>
+</div>
+
+{% endblock %}

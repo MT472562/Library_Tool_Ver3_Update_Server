@@ -1,0 +1,111 @@
+<input id="Management_code" style="width: 400px;height: 2.5rem;font-size: 1.2rem;">
+<div id="overlay-camera" style="display: none">
+    <div id="interactive" class="viewport">
+        <p id="Reed_msg">A10....から始まるバーコードを読み込んでください</p>
+        <p id="camera_standby">カメラを起動しています...<br>少々お待ちください...</p>
+        <button onclick="END_QR_Reader()" id="Reader_end_button">読み取り終了</button>
+    </div>
+</div>
+<button onclick="QR_Reader()" id="Reader_start_button">読み取り開始</button>
+<script type="text/javascript" src="https://serratus.github.io/quaggaJS/examples/js/quagga.min.js"></script>
+<script>
+    function QR_Reader() {
+        document.getElementById("overlay-camera").style.display = "block";
+        Quagga.init({
+            inputStream: {
+                name: 'Live',
+                type: 'LiveStream',
+                target: document.querySelector('#interactive'),//埋め込んだdivのID
+            },
+            decoder: {
+                readers: ['codabar_reader']
+            }
+        }, (err) => {
+            if (err) {
+                console.log(err);
+                return
+            }
+            Quagga.start();
+        })
+
+        Quagga.onDetected(success => {
+            const code = success.codeResult.code;
+            if (code) {
+                var re_code = code.replace(/A/g, '');
+                Quagga.stop();
+                document.getElementById("Management_code").value=re_code;
+                document.getElementById("overlay-camera").style.display = "none";
+                return re_code
+            }
+        })
+    }
+
+    function END_QR_Reader() {
+        Quagga.stop();
+        document.getElementById("overlay-camera").style.display = "none";
+    }
+</script>
+
+<style>
+    #overlay-camera video, #overlay-camera canvas {
+        filter: grayscale(100%);
+        border-radius: 2rem;
+        width: 300px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    #Reed_msg {
+        color: #efefef;
+        position: absolute;
+        top: 20%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    #camera_standby {
+        color: #efefef;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    #Reader_start_button, #Reader_end_button {
+        width: 10rem;
+        height: 2.5rem;
+        font-size: 1.1rem;
+        border: none;
+        border-radius: 5px;
+        margin: 0.5rem;
+        position: absolute;
+        top: 10%;
+        left: 90%;
+        transform: translate(-50%, -50%);
+    }
+
+    #Reader_start_button {
+        background-color: #4db2ff;
+        box-shadow: 0 0 15px 0 rgb(0, 119, 255);
+    }
+
+    #Reader_end_button {
+        background-color: #ffb24d;
+        box-shadow: 0 0 15px 0 rgb(247, 255, 0);
+    }
+
+    #overlay-camera {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(21, 32, 43, 0.8);
+        z-index: 99;
+    }
+</style>

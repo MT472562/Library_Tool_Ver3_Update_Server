@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block head %}
+<!-- <link rel="stylesheet" href="/Library/resources/style.css"> -->
+<!-- スタイルシート読み込みなさい -->
+{% endblock %}
+{% block body %}
+<!-- bodyタグに書く内容を書きなさい -->
+<div id="login_status">
+    <p>ログイン中のアカウントの情報</p>
+    <p>{{ session['username'] }}さんがログイン中</p>
+    <p>アクセスレベル:{{ session['access_level'] }}</p>
+    <button><a href="/logout">サインアウト</a></button>
+</div>
+<div id="login_url_set">
+    <p>ログイン中のアカウントはありません。</p>
+    <p>下記のメニューを利用するかログインをしてください</p>
+    <p><a href="/account">ログインページへ移動</a></p>
+</div>
+<div id="rental_ranking">
+    <h2>-貸出ランキング-</h2>
+    <div class="new_book">
+        <!--        {{ranking_data}}-->
+        {% for data in ranking_data %}
+        <p>{{ data[0] }}さん : {{ data[1] }}ポイント</p>
+        {% endfor %}
+
+    </div>
+</div>
+<footer>
+    <a href="https://youtube.com/playlist?list=PLRwpS3a_WpxgzBBoWAzGpbFkMxaIrX7wM&si=uTFAHPGOIsouGIQa">YouTube</a>
+    <a href="https://github.com/MT472562/Library_Tool_Ver3">GitHub</a>
+    <a href="https://github.com/MT472562/Library_Tool_Ver3/blob/main/README.md">README</a>
+    <a href="https://qiita.com/magirawashili/private/0eb97adab73b62e80ad0#%E5%90%84%E3%83%9A%E3%83%BC%E3%82%B8%E3%81%AE%E5%88%A9%E7%94%A8%E6%96%B9%E6%B3%95%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6">Manual</a>
+    <a href="https://qiita.com/magirawashili/private/0eb97adab73b62e80ad0">Qiita</a>
+    <p>&copy; 2022- Slack:TM</p>
+</footer>
+<script>
+    if ("{{ session['username'] }}" == "") {
+        document.getElementById("login_status").style.display = "none";
+    } else {
+        document.getElementById("login_url_set").style.display = "none";
+    }
+</script>
+{% endblock %}

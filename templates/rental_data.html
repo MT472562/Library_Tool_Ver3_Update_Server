@@ -1,0 +1,139 @@
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>貸出日</th>
+        <th>貸出ID</th>
+        <th>貸出ユーザーID</th>
+        <th>貸出本コード</th>
+        <th>貸出状態</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for row in value %}
+    <tr>
+        <td>{{ row[0] }}</td>
+        <td>{{ row[1] }}</td>
+        <td>{{ row[2] }}</td>
+        <td>{{ row[3] }}</td>
+        <td>{{ row[4] }}</td>
+        {% if row[5] == "0" %}
+        <td style="color: #00a4e0">蔵書</td>
+        {% else %}
+         <td style="color: #e54034">貸出中</td>
+        {% endif %}
+        <td>
+            {% if row[5] == "0" %}
+            <button class="button_0" onclick="getRowData(this,1)">貸出中に更新</button>
+            {% else %}
+            <button class="button_1" onclick="getRowData(this,0)">蔵書中に更新</button>
+            {% endif %}
+        </td>
+        <td>
+            <button class="button_999" onclick="getRowData(this,999)">削除</button>
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<style>
+    td,tr,th{
+        color: aliceblue;
+    }
+    table {
+        background-color: #15202B;
+        border-collapse: collapse;
+        width: 100%;
+        border: #efefef 1px solid;
+    }
+
+    th, td {
+        text-align: left;
+        padding: 8px;
+    }
+
+    tr:nth-child(even) {
+        background-color: #26343d;
+    }
+
+    button {
+        width: 100%;
+        height: 100%;
+    }
+
+    .button_0 {
+        background-color: #2a96de;
+        border: none;
+        color: white;
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        border-radius: 0.5rem;
+    }
+
+    .button_999 {
+        background-color: #f44336;
+        border: none;
+        color: white;
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        border-radius: 0.5rem;
+    }
+
+    .button_1 {
+        background-color: #ff9327;
+        border: none;
+        color: white;
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        border-radius: 0.5rem;
+    }
+
+    button:hover {
+        opacity: 0.8;
+    }
+</style>
+
+<script>
+    function getRowData(button, modes) {
+        const row = button.parentNode.parentNode;
+        const rowData = Array.from(row.children).map(cell => cell.textContent);
+        console.log(rowData[2]);
+        console.log(modes);
+        if (modes === 999) {
+            var result = window.confirm("本当に削除しますか？");
+            if (result) {
+                const check = prompt("削除する場合は、削除対象のNumberを入力してください.\n例：1");
+                if (check === rowData[0]) {
+                    console.log("削除します");
+                } else {
+                    alert("削除対象のNumberが違います");
+                    return;
+                }
+            } else {
+                return;
+            }
+        }
+        var data = {
+            id: rowData[2],
+            status: modes
+        };
+
+
+        fetch('/rental_data_update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(data => {
+                alert("データを更新しました。ページをリロードします。");
+                window.location.replace("/rental_data")
+            })
+            .catch(error => console.error(error));
+    }
+</script>

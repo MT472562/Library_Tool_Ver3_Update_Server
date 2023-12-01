@@ -1,0 +1,166 @@
+/* General Styles */
+* {
+    color: #efefef;
+    font-family: 'Noto Sans JP', sans-serif;
+}
+
+.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0); /* Move to the center */
+}
+
+@keyframes fadeOutAndSlideUp {
+    0% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0); /* Start from the center */
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-100%); /* Move up to the top */
+    }
+}
+
+/* Fade In Animation */
+.fade-in-element {
+    opacity: 0; /* Initial state: hidden */
+    transition: opacity 1s ease; /* Animate the opacity property */
+}
+
+.fade-in-element.fade-in {
+    opacity: 1; /* Opacity when faded in */
+}
+
+/* Header and Navigation Styles */
+.menu-list {
+    display: none;
+}
+
+.menu-open .menu-list {
+    display: block;
+}
+
+header {
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+/* Button Styles */
+.base_button {
+    position: relative;
+    display: block;
+    padding: 1em 2em 1em 1em;
+    margin: 1em;
+    font-size: 14px;
+    color: #fff;
+    text-align: center;
+    line-height: 1;
+    background: #3e7ea9;
+    background: linear-gradient(to right, #387096, #6c5da2);
+    text-indent: 0.1em;
+    letter-spacing: 0.1em;
+    border-radius: 2em;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+/* Grid Styles */
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 5px; /* Gap between grid cells */
+    grid-auto-flow: row; /* Automatic arrangement direction of the grid */
+    justify-items: center; /* Horizontal alignment of grid items */
+    align-items: center; /* Vertical alignment of grid items */
+    position: fixed;
+    left: 4em;
+    top: 93%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(25, 87, 121, 0.5);
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+}
+
+/* Book Image Styles */
+.bk_img {
+    width: 25px;
+    height: 25px;
+    display: inline-block;
+    background-color: transparent;
+    border-radius: 50%;
+    border: 1px solid #fff;
+}
+
+.bk_img:nth-child(1) {
+    background-color: #15202B;
+}
+
+.bk_img:nth-child(2) {
+    background-image: linear-gradient(135deg, #a560ce 0%, #c459a1 100%);
+}
+
+.bk_img:nth-child(3) {
+    background-image: linear-gradient(-225deg, #65379B 0%, #745bc7 53%, #6457C6 100%);
+}
+
+.bk_img:nth-child(4) {
+    background-image: linear-gradient(-225deg, #ab0454 0%, #8D0B93 50%, #321575 100%);
+}
+
+.bk_img:nth-child(5) {
+    background-image: linear-gradient(-225deg, #473B7B 0%, #3584A7 51%, #29b4a3 100%);
+}
+
+.bk_img:nth-child(6) {
+    background-image: linear-gradient(-20deg, #c94c5d 0%, #cc7c37 100%);
+}
+
+/* Header Icons */
+#home_icon,
+#account_icon,
+#search_icon,
+#lending_icon,
+#return_icon,
+#new_book_icon,
+#info_icon,
+#update_icon,
+#inventory_icon,
+#menu_icon {
+    width: 3rem;
+    padding: 0.4rem;
+    user-select: none;
+}
+
+#home_icon:hover,
+#account_icon:hover,
+#search_icon:hover,
+#lending_icon:hover,
+#return_icon:hover,
+#new_book_icon:hover,
+#info_icon:hover,
+#update_icon:hover,
+#inventory_icon:hover,
+#menu_icon:hover {
+    width: 3.5rem;
+    padding: 0.2rem;
+}
+
+/* Responsive Styles */
+/*@media screen and (min-width: 768px) and (max-width: 1124px) {*/
+/*    #home_icon,*/
+/*    #account_icon,*/
+/*    #search_icon,*/
+/*    #lending_icon,*/
+/*    #return_icon,*/
+/*    #new_book_icon,*/
+/*    #info_icon,*/
+/*    #update_icon,*/
+/*    #inventory_icon,*/
+/*    #menu_icon {*/
+/*        border: solid 0.1rem #d3d3d3;*/
+/*        border-radius: 1rem;*/
+/*        left: auto;*/
+/*    }*/
+/*}*/

@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block head %}
+{% endblock %}
+{% block body %}
+<div id="new_book_form">
+    <form id="input_new_book_from" method="POST">
+        <p id="input_management_code">管理番号 {{ management_code }} （変更不可）</p>
+
+        <input type="number"
+               value="" autocomplete="off" maxlength="13"
+               placeholder="ISBN" id="input_isbn_code">
+
+
+        <div id="api_res">
+            <div>
+                <input type="text" id="api_book_title" autocomplete="off" placeholder="タイトルを入力">
+                <input type="text" id="api_book_author" autocomplete="off" placeholder="著者を入力">
+            </div>
+            <div>
+                <input type="text" id="api_book_headline" autocomplete="off" placeholder="見出し分を入力">
+                <input type="url" id="api_book_sample_img" autocomplete="off" placeholder="サンプル画像を入力">
+            </div>
+            <div>
+                <input type="number" id="api_book_page" autocomplete="off" placeholder="ページ数を入力">
+                <input type="text" id="api_book_release" autocomplete="off" placeholder="公開日を入力">
+            </div>
+            <select style="width: 71%;height: 2rem;margin-top: 1rem">
+                <option value="{{ stoke }}">現在の在庫状況　　{{stoke}}</option>
+                <option value="1">在庫あり</option>
+                <option value="0">貸出中</option>
+            </select>
+        </div>
+
+        <button type="button" onclick="delete_object()" id="new_book_list_append" type="button"
+                style="background-color: #dc483c;border: none">
+            削除
+        </button>
+
+        <button type="button" onclick="book_update()" id="new_book_list_append" type="submit" style="background-color: #1a73e8;border: none">
+            アップデート
+        </button>
+    </form>
+
+</div>
+<style>
+    header {
+        display: none;
+    }
+
+    #new_book_form {
+        border: 10px solid red;
+        padding: 10px;
+    }
+</style>
+<script>
+    document.getElementById('input_isbn_code').value = "{{isbn_code}}";
+    document.getElementById('api_book_title').value = "{{title}}";
+    document.getElementById('api_book_author').value = "{{author}}";
+    document.getElementById('api_book_headline').value = "{{headline}}";
+    document.getElementById('api_book_sample_img').value = "{{sample_url}}";
+    document.getElementById('api_book_page').value = "{{number_of_pages}}";
+    document.getElementById('api_book_release').value = "{{release_date}}";
+
+    // document.getElementById('input_register').value = bookData.register;
+
+    function delete_object() {
+        const management_code = "{{management_code}}"
+        if (management_code == "") {
+            alert("管理番号が入力されていません");
+            window.location.replace("/db_setting")
+            return;
+        } else if (!confirm("本当に削除しますか？")) {
+            return;
+        } else if (!confirm("本当によろしいですか？")) {
+            return;
+        } else {
+            fetch('/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({code: management_code})
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // ここで受け取ったデータを別の関数などに渡すなどして利用することができる
+                    // console.log(data);
+                    alert("カラムを削除しました。トップページへ移動します。");
+                    window.location.replace("/")
+                })
+                .catch(error => console.error(error));
+        }
+    }
+
+    // POSTリクエストを送信する関数
+    function book_update() {
+    if (!confirm("更新処理を実行しますが、よろしいですか？")) {
+        return;
+    } else {
+    var managementCode = "{{management_code}}";
+    var isbnCode = document.getElementById('input_isbn_code').value;
+    var bookTitle = document.getElementById('api_book_title').value;
+    var bookAuthor = document.getElementById('api_book_author').value;
+    var bookHeadline = document.getElementById('api_book_headline').value;
+    var bookSampleImg = document.getElementById('api_book_sample_img').value;
+    var bookPage = document.getElementById('api_book_page').value;
+    var bookRelease = document.getElementById('api_book_release').value;
+    var stock = document.querySelector('select').value;
+
+    // データオブジェクトを作成
+    var data = {
+        managementCode: managementCode,
+        isbnCode: isbnCode,
+        bookTitle: bookTitle,
+        bookAuthor: bookAuthor,
+        bookHeadline: bookHeadline,
+        bookSampleImg: bookSampleImg,
+        bookPage: bookPage,
+        bookRelease: bookRelease,
+        stock: stock
+    };
+        fetch('/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                window.location.replace("/setting")
+            })
+            .catch(error => console.error(error));
+
+    }
+    }
+</script>
+{% endblock %}

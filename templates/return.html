@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block head %}
+<!-- <link rel="stylesheet" href="/Library/resources/style.css"> -->
+<!-- スタイルシート読み込みなさい -->
+{% endblock %}
+{% block body %}
+<audio src="resources/audio.mp3" id="audio"></audio>
+<audio src="resources/audio_no.mp3" id="audio-no"></audio>
+<div class="overlay" id="overlay" style="display:none">
+    <div class="loader">
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+</div>
+<div id="return_code_from">
+    <video id="camera-preview" autoplay style="filter: grayscale(80%) ;display: none">
+    </video>
+    <h3 id="Reedmsg">メールに添付されている返却用バーコードか返却コードを入力してください</h3>
+    <input id="return_code" type="text" placeholder="返却コードを入力"><br>
+    <button id="return_start_button" type="button" onclick="return_book()">返却</button>
+</div>
+<button onclick="cameraon()" id="Reader_start_button">カメラで読み込む</button>
+
+<!-- bodyタグに書く内容を書きなさい -->
+<script>
+    if (location.protocol == 'http:') {
+        document.getElementById("Reader_start_button").style.display="none";
+    }
+    document.getElementById("return_code").focus();
+    async function return_book() {
+        var id = document.getElementById("return_code").value
+        if (id == "") {
+            return
+        }
+        document.getElementById("overlay").style.display = 'block';
+
+        async function fetchData() {
+            const response = await fetch('/rental_book_id_check', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    id: id
+                })
+            });
+            const data = await response.json();
+            return data;
+        }
+
+        const result = await fetchData()
+        console.log(result)
+        if (result["status"] == false) {
+            top_alert("エラー", result["msg"], 3000)
+            document.getElementById("overlay").style.display = 'none';
+            document.getElementById("audio-no").play()
+        } else {
+            var res_data = ""
+            for (let i = 0; i < result["data"].length; i++) {
+                var res_data = res_data + "・" + result["data"][i] + "\n"
+            }
+            document.getElementById("audio").play()
+
+            top_alert("返却のお知らせ", "本の返却が完了しました\n" +
+                "【返却した本の管理コード】\n"
+                + res_data +
+                "返却した本は、本棚に戻してください\n" +
+                "ご利用ありがとうございました", 3000)
+            document.getElementById("return_code").value = ""
+            document.getElementById("overlay").style.display = 'none';
+        }
+    }
+</script>
+<script type="text/javascript" src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
+<script>
+    function cameraon() {
+    const video = document.getElementById('camera-preview');
+    const scanner = new Instascan.Scanner({video});
+
+    // QRコードが読み取られたときの処理
+    scanner.addListener('scan', function (content) {
+        console.log(content)
+        document.getElementById("return_code").value=content;
+        return_book()
+
+    });
+    Instascan.Camera.getCameras()
+        .then(function (cameras) {
+            if (cameras.length > 0) {
+                scanner.start(cameras[0]);
+                document.getElementById("camera-preview").style.display="inline-block"
+                document.getElementById("Reedmsg").textContent="メールに添付されているQRコードを読み込ませてください。"
+            } else {
+                console.error('利用可能なカメラがありません');
+            }
+        })
+        .catch(function (error) {
+            console.error('カメラのアクセスに失敗しました:', error);
+        });
+    }
+
+
+</script>
+{% endblock %}

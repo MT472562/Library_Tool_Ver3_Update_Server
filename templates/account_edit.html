@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% block head %}
+<!-- <link rel="stylesheet" href="/Library/resources/style.css"> -->
+<!-- スタイルシート読み込みなさい -->
+{% endblock %}
+{% block body %}
+<!-- bodyタグに書く内容を書きなさい -->
+<div class="overlay" id="overlay" style="display: none;">
+    <div id="edit_input_data">
+        <h3 id="edit_name"></h3>
+        <input id="after_input" placeholder="">
+        <button id="edit_button" onclick="get_data()">更新</button>
+    </div>
+    <div id="ck_axess_userid_password" style="display: none;">
+        <input placeholder="認証ユーザー名を入力" id="ck_userid">
+        <input placeholder="認証ユーザーパスワードを入力" id="ck_password" type="password">
+        <button id="ck_post">更新</button>
+    </div>
+    <div id="new_email" style="display: none;">
+        <input placeholder="認証ユーザーコードを入力" id="ck_new_email_code">
+        <button id="new_email_post_set">更新</button>
+    </div>
+    <div class="loader">
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+</div>
+
+
+<div id="account_manager_edit">
+    <p>管理用ユーザーID：{{session['id']}}番</p>
+    <p>
+        <button class="accout_edit-button" onclick="input_data('新しいユーザー名を入力',0,'text')">編集</button>
+        ユーザー名:{{session['username']}}
+    </p>
+    <p>
+        <button class="accout_edit-button" onclick="input_data('新しいユーザーIDを入力',1,'text')">編集</button>
+        ユーザーID:{{session['userid']}}
+    </p>
+    <p>
+        <button class="accout_edit-button" onclick="input_data('新しいメールアドレスを入力',2,'text')">編集</button>
+        メールアドレス:{{session['mail']}}
+    </p>
+    <p>
+        <button class="accout_edit-button" onclick="input_data('新しいパスワードを入力',3,'text')">編集</button>
+        パスワード:********(非表示)
+    </p>
+    <p>
+        <button class="accout_edit-button" onclick="input_data('アクセスレベルを更新',4,'number')">編集</button>
+        アクセスレベル:{{session['access_level']}}
+    </p>
+</div>
+
+<button onclick="window.location.replace('/account')" id="reload_button">◀アカウント情報のページに戻る</button>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script>
+    var gb_val;
+
+    function input_data(title, val, type) {
+        document.getElementById("overlay").style.display = "block";
+        document.getElementById("edit_name").innerHTML = title;
+
+        if (type === "number") {
+            var selectElement = document.createElement("select");
+            selectElement.style.width = "100px";
+            selectElement.style.height = "30px";
+            selectElement.style.fontSize = "20px";
+            selectElement.style.color = "black";
+
+            selectElement.id = "after_input";
+            selectElement.name = "after_input";
+
+            for (var i = 1; i <= 5; i++) {
+                var optionElement = document.createElement("option");
+                optionElement.value = i;
+                optionElement.textContent = i;
+                selectElement.appendChild(optionElement);
+            }
+
+            var oldAfterInput = document.getElementById("after_input");
+            oldAfterInput.parentNode.replaceChild(selectElement, oldAfterInput);
+        } else {
+            var inputElement = document.createElement("input");
+            inputElement.id = "after_input";
+            inputElement.name = "after_input";
+            inputElement.type = type;
+
+            var oldAfterInput = document.getElementById("after_input");
+            oldAfterInput.parentNode.replaceChild(inputElement, oldAfterInput);
+        }
+        gb_val = val;
+    }
+
+
+    async function post_data(data) {
+        const post_url = "/account_edit_post";
+
+        try {
+            const response = await fetch(post_url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            const res_data = await response.json();
+            if (res_data["res_data"]["st"] == "True") {
+                top_alert("情報", res_data["res_data"]["msg"], 5000);
+                document.getElementById("overlay").style.display = "none";
+                setTimeout(function () {
+                    window.location.reload();
+                }, 2000);
+            } else {
+                top_alert("情報", res_data["res_data"]["msg"], 5000);
+            }
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    async function get_data() {
+        var after_data = document.getElementById("after_input").value;
+
+        if ((gb_val == 4 || gb_val == "4") && (after_data == "3" || after_data == "4" || after_data == "5")) {
+            top_alert("情報", "認証が必要なアクセスレベルを変更しようとしています。\n利用可能なアカウントを入力してください", 5000);
+            document.getElementById("edit_input_data").style.display = "none";
+            document.getElementById("ck_axess_userid_password").style.display = "block";
+            document.getElementById("ck_post").onclick = async function () {
+                var userId = document.getElementById("ck_userid").value;
+                var password = document.getElementById("ck_password").value;
+                data = {
+                    "after_data": after_data,
+                    "val": gb_val,
+                    "userid": userId,
+                    "password": password,
+                    "new_mail": "",
+                };
+                try {
+                    var result = await post_data(data);
+                    console.log(result);
+
+                    // post_data の処理が完了した後に行いたい処理
+                    // ...
+                } catch (error) {
+                    console.error(error);
+                }
+            };
+        } else if (gb_val == 2 || gb_val == "2") {
+            if (document.getElementById("after_input").value == "") {
+                return top_alert("エラーが発生しました。", "メールアドレスが空白のため、使用できません。")
+            }
+
+            post_url = "/account_edit_post_ck_email";
+            data = {
+                "email": document.getElementById("after_input").value
+            };
+
+            const response = await fetch(post_url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            const res_data = await response.json();
+            top_alert("情報", res_data["res_data"]["msg"], 5000);
+            if (res_data["res_data"]["st"] == "True") {
+                document.getElementById("edit_input_data").style.display = "none";
+                document.getElementById("new_email").style.display = "block";
+            }
+            else {
+                return
+            }
+
+            document.getElementById("new_email_post_set").addEventListener("click", async function () {
+                var ck_code = document.getElementById("ck_new_email_code").value;
+                const ck_code_encode = CryptoJS.SHA512(ck_code).toString();
+                if (ck_code_encode == res_data["res_data"]["random_number_hash"]) {
+                    data = {
+                        "after_data": after_data,
+                        "val": gb_val,
+                        "userid": "",
+                        "password": "",
+                        "new_mail": res_data["res_data"]["email"]
+                    };
+                    try {
+                        var result = await post_data(data);
+
+                        // post_data の処理が完了した後に行いたい処理
+                        // ...
+                    } catch (error) {
+                        console.error(error);
+                    }
+                } else {
+                    top_alert("情報", "認証コードが一致しません", 5000);
+                    document.getElementById("ck_new_email_code").value = "";
+                }
+            });
+        } else {
+            data = {
+                "after_data": after_data,
+                "val": gb_val,
+                "userid": "",
+                "password": "",
+                "new_mail": ""
+            };
+            try {
+                var result = await post_data(data);
+            } catch (error) {
+            }
+        }
+    }
+
+
+</script>
+{% endblock %}
