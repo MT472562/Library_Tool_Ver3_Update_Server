@@ -3,7 +3,7 @@
   "Maintenance.py": 1.0,
   "database_reset.py": 1.0,
   "Install_check.py": 1.0,
-  "templates/resources/css/base.css": 1.0,
+  "templates/resources/css/base.css": 1.1,
   "templates/resources/css/style.css": 1.0,
   "templates/account.html": 1.1,
   "templates/account_edit.html": 1.0,
