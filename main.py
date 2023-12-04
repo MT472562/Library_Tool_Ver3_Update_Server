@@ -61,21 +61,20 @@ logging.critical('This is a critical message')
 
 # Flaskの設定
 app = flask.Flask(__name__, static_folder='./templates/resources')
-app.config['SECRET_KEY'] = secrets.token_urlsafe(16)
+app.config['SECRET_KEY'] = secrets.token_urlsafe(128)
 app.config['SESSION_TYPE'] = 'filesystem'
 RESET_PASSWORD_EXPIRATION = 3600
 DATABASE = "database.db"
 INVENTORY_DATABASE = "inventoryDatabase.db"
 tokens = {}
-app.config['SECRET_KEY'] = 'secret key here'
+auth = None
 auth = HTTPDigestAuth()
 users = {
-    "admin": "root"
+    "1": "1"
 }
 us = random.randint(1000, 9999)
 pw = random.randint(1000, 9999)
 users.update({str(us): str(pw)})
-
 
 @auth.get_password
 def get_pw(username):
@@ -2263,7 +2262,7 @@ def new_date_in():
 
 
 def run_flask_app():
-    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=1)
     app.run(port=54321, host="0.0.0.0")
 
 
@@ -2299,6 +2298,9 @@ def read_auth_token_from_file(file_path='ngrok_token.json'):
             return token_data
     else:
         print(f"Error: File '{file_path}' not found.")
+#
+# from flask_socketio import SocketIO
+# socketio = SocketIO(app)
 
 
 # ngrokトークンを設定
