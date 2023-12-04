@@ -5,7 +5,7 @@
   "spare": "spare",
   "spare": "spare",
   "make_file": ["","","",""],
-  "main.py": 1.0,
+  "main.py": 1.1,
   "Maintenance.py": 1.0,
   "database_reset.py": 1.0,
   "Install_check.py": 1.0,
