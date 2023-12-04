@@ -4,7 +4,7 @@
   "SystemVersion": 1.1,
   "spare": "spare",
   "spare": "spare",
-  "make_file": ["","","",""],
+  "make_file": ["inu.py","css/basess.css","/logaaa","/namu/num.py"],
   "main.py": 1.1,
   "Maintenance.py": 1.0,
   "database_reset.py": 1.0,
