@@ -1,4 +1,4 @@
-#1.1
+# 1.1
 # ライブラリ読み込み
 import base64
 import binascii
@@ -70,17 +70,23 @@ tokens = {}
 auth = None
 auth = HTTPDigestAuth()
 users = {
-    "1": "1"
+    "admin": "root"
 }
 us = random.randint(1000, 9999)
 pw = random.randint(1000, 9999)
 users.update({str(us): str(pw)})
+
 
 @auth.get_password
 def get_pw(username):
     if username in users:
         return users.get(username)
     return None
+
+
+@app.route("/test")
+def test():
+    return render_template("code.html")
 
 
 # 引数で入力されたファイルを削除する関数
@@ -1106,10 +1112,6 @@ def get_book_data():
     return jsonify(data)
 
 
-
-
-
-
 @app.route("/rental_book_set", methods=['POST'])
 def rental_book_set():
     if flask.session["userid"] is None:
@@ -1687,6 +1689,7 @@ def error_401(error):
                            title="401 Unauthorized",
                            error=error)
 
+
 @app.errorhandler(403)
 def error_403(error):
     return render_template('error_page.html',
@@ -1733,6 +1736,7 @@ def error_429(error):
                            page_name="429 Too Many Requests --",
                            title="429 Too Many Requests",
                            error=error)
+
 
 @app.errorhandler(500)
 def error_500(error):
@@ -2262,11 +2266,13 @@ def new_date_in():
 
 
 def run_flask_app():
-    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=1)
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=3)
     app.run(port=54321, host="0.0.0.0")
 
 
 ALLOW_NETWORKS = ["127.0.0.1", "192.168.3.7", "10.7.100.94"]
+
+
 # 本番環境ではALLOW_NETWORKSを変更してください
 @app.before_request
 def before_request():
@@ -2280,6 +2286,18 @@ def before_request():
     return render_template("IP_access_restrictions.html")
 
 
+@app.route("/cancel_request")
+def cancel_request():
+    if 'access_level' in flask.session:
+        insert_log("強制ログアウト", "1", "次のユーザーを強制ログアウトさせました", "cancel_request()", "System")
+        # セッションデータをクリア
+        flask.session.pop('userid', None)
+        flask.session.pop('username', None)
+        flask.session.pop('access_level', None)
+        flask.session.pop('mail', None)
+    return render_template("IP_access_restrictions.html")
+
+
 @app.route("/backup_db")
 def backup_db():
     if 'access_level' not in flask.session:
@@ -2290,6 +2308,7 @@ def backup_db():
         Maintenance.backup()
         return redirect("/setting")
 
+
 def read_auth_token_from_file(file_path='ngrok_token.json'):
     if os.path.exists(file_path):
         with open(file_path, 'r') as file:
@@ -2298,9 +2317,36 @@ def read_auth_token_from_file(file_path='ngrok_token.json'):
             return token_data
     else:
         print(f"Error: File '{file_path}' not found.")
-#
-# from flask_socketio import SocketIO
-# socketio = SocketIO(app)
+
+
+
+@app.before_request
+def all_pages():
+    pass
+
+
+@app.route("/suveilance", methods=['POST'])
+def suveilance():
+    rq_data = request.get_json()
+    rq = rq_data["request"].encode('utf-8')
+    rq = hashlib.sha512(rq).hexdigest()
+    with open('ip_gps_data.json', 'r') as file:
+        data = json.load(file)
+    result_data = False
+    for data_n in data:
+        encoded_data = (data[data_n][0] + data[data_n][1]).encode('utf-8')
+        hashed_data = hashlib.sha512(encoded_data).hexdigest()
+        hashed_data = hashed_data.encode('utf-8')
+        hashed_data = hashlib.sha512(hashed_data).hexdigest()
+        if rq == hashed_data:
+            result_data = True
+    return jsonify({"data": result_data})
+
+
+
+
+
+
 
 
 # ngrokトークンを設定
