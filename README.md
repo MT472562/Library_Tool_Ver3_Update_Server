@@ -41,7 +41,8 @@
 - `templates/test.html`
 - `templates/update_book.html`
 - `templates/user_setting.html`
-
+- `templates/user_setting.html`
+-  `ip_gps_data.json`
 ## Update用URL
 
 - `next_url`: [リソースファイルのベースURL](https://raw.githubusercontent.com/MT472562/Library_Tool_Ver3_Update_Server/main/)
