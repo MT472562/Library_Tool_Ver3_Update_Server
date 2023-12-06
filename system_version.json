@@ -42,5 +42,6 @@
   "templates/test.html": 1.1,
   "templates/update_book.html": 1.1,
   "templates/user_setting.html": 1.1,
+  "ip_gps_data.json":1.0,
   "system_version.json": 1.0
 }
