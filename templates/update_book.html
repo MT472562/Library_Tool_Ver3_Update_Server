@@ -84,7 +84,7 @@
                 .then(response => response.json())
                 .then(data => {
                     // ここで受け取ったデータを別の関数などに渡すなどして利用することができる
-                    // console.log(data);
+                    // (data);
                     alert("カラムを削除しました。トップページへ移動します。");
                     window.location.replace("/")
                 })
@@ -128,7 +128,7 @@
         })
             .then(response => response.json())
             .then(data => {
-                console.log(data);
+                (data);
                 window.location.replace("/setting")
             })
             .catch(error => console.error(error));

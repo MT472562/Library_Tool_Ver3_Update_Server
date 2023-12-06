@@ -1,6 +1,40 @@
 <!DOCTYPE html>
 <html lang="ja">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script>
+    async function getIp() {
+        try {
+            const networkInfo = await fetch('https://ipinfo.io?callback')
+                .then(res => res.json());
+            var _rq_data = String(networkInfo.ip) + String(networkInfo.hostname);
+            var rq_data = CryptoJS.SHA512(_rq_data).toString();
+            const postData = {
+                request: rq_data
+            };
 
+            const requestOptions = {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(postData)
+            };
+
+            const response = await fetch('/suveilance', requestOptions);
+            const data = await response.json();
+            if (data["data"] === false) {
+                window.location.href = "/cancel_request";
+            }
+        } catch (error) {
+            console.error("Error in getIp:", error);
+        }
+    }
+
+
+    window.onload = function () {
+        getIp();
+    };
+</script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         var fadeElement = document.querySelector(".fade-in-element");
@@ -89,12 +123,12 @@
             msg.replace(/\n/g, "<br>") +
             "</div>";
         document.body.appendChild(alert);
-        console.log(bk_img)
+        (bk_img)
         if (bk_img == undefined){
             bk_img = 0
         }
         alert.style = bk_img_list_alert[bk_img];
-        console.log("bk_img:", bk_img);
+        ("bk_img:", bk_img);
         // Trigger the fade-in animation by adding the 'show' class
         setTimeout(function () {
             alert.classList.add("show");
@@ -109,6 +143,8 @@
         }, time);
     }
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+
 <script>
 
     var bk_img_list = [
@@ -191,6 +227,45 @@
     }
     error_c()
 
+
+    // ＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃
+    // Well, I guess some people just prefer experiencing the internet in black and white,
+    // minus all those colorful ads that fund the content they enjoy.
+    // It's like strolling through a digital ghost town – no pop-ups,
+    // no banners, just the eerie silence of ad-free browsing.
+    // A real utopia for the online minimalists, I suppose.
+    // ＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃
+
+    if (navigator.brave) {
+        var body = document.body;
+        while (body.firstChild) {
+            body.removeChild(body.firstChild);
+        }
+        var fullscreenDiv = document.createElement('div');
+        fullscreenDiv.id = 'fullscreenDiv';
+        var contentDiv = document.createElement('div');
+        contentDiv.id = 'content';
+        contentDiv.textContent = 'Well, I guess some people just prefer experiencing the internet in black and white, minus all those colorful ads that fund the content they enjoy. It\'s like strolling through a digital ghost town – no pop-ups, no banners, just the eerie silence of ad-free browsing. A real utopia for the online minimalists, I suppose.';
+        fullscreenDiv.appendChild(contentDiv);
+        document.body.appendChild(fullscreenDiv);
+        fullscreenDiv.style.position = 'fixed';
+        fullscreenDiv.style.top = '0';
+        fullscreenDiv.style.left = '0';
+        fullscreenDiv.style.width = '100%';
+        fullscreenDiv.style.height = '100%';
+        fullscreenDiv.style.backgroundColor = 'rgb(0,0,0)';
+        fullscreenDiv.style.zIndex = '999999';
+        fullscreenDiv.style.display = 'flex';
+        fullscreenDiv.style.justifyContent = 'center';
+        fullscreenDiv.style.alignItems = 'center';
+        contentDiv.style.color = 'white';
+        contentDiv.style.textAlign = 'center';
+        contentDiv.style.fontSize = '24px';
+    } else {
+        ("このブラウザはBraveではありません。");
+    }
+    // ＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃
+
 </script>
 <style>
     .alert {
@@ -238,9 +313,10 @@
 
 
 </style>
-
 {% block body %}
 {% endblock %}
 </body>
-
 </html>
+
+
+

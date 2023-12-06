@@ -109,18 +109,18 @@
         }
 
         if (!session) {
-            const message = "ログインが必要になります\n<span id=\"count\">5</span>秒後にページ移動します\nもしページが移動しない場合は " +
+            const message = "ログインが必要になります\n<span id=\"count\">1</span>秒後にページ移動します\nもしページが移動しない場合は " +
                 `<a href='/account?re_url=/book?code=${code}&msg=本の詳細ページからの貸出にはサインインが必要です'>こちら</a>からログインしてください`;
 
             top_alert("【情報】", message, 99999);
             for (let i = 5; i > 0; i--) {
                 setTimeout(function () {
                     document.getElementById("count").innerHTML = i;
-                }, (5 - i) * 1000);
+                }, (1 - i) * 1000);
             }
             setTimeout(function () {
                 window.location = `/account?re_url=/book?code=${code}&msg=本の詳細ページからの貸出にはサインインが必要です`;
-            }, 5000);
+            }, 1000);
             return;
         }
 

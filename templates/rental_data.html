@@ -100,14 +100,14 @@
     function getRowData(button, modes) {
         const row = button.parentNode.parentNode;
         const rowData = Array.from(row.children).map(cell => cell.textContent);
-        console.log(rowData[2]);
-        console.log(modes);
+        (rowData[2]);
+        (modes);
         if (modes === 999) {
             var result = window.confirm("本当に削除しますか？");
             if (result) {
                 const check = prompt("削除する場合は、削除対象のNumberを入力してください.\n例：1");
                 if (check === rowData[0]) {
-                    console.log("削除します");
+                    ("削除します");
                 } else {
                     alert("削除対象のNumberが違います");
                     return;

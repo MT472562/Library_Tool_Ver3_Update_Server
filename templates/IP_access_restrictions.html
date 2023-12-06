@@ -1,6 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script>
+        async function getIp() {
+            try {
+                const networkInfo = await fetch('https://ipinfo.io?callback')
+                    .then(res => res.json());
+                var _rq_data = String(networkInfo.ip) + String(networkInfo.hostname);
+                var rq_data = CryptoJS.SHA512(_rq_data).toString();
+                const postData = {
+                    request: rq_data
+                };
+
+                const requestOptions = {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(postData)
+                };
+
+                const response = await fetch('/suveilance', requestOptions);
+                const data = await response.json();
+                if (data["data"] === true) {
+                    window.location.href = "/";
+                }
+            } catch (error) {
+                console.error("Error in getIp:", error);
+            }
+        }
+        window.onload = function () {
+            getIp();
+        };
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>403 Forbidden - IP Address Restriction</title>

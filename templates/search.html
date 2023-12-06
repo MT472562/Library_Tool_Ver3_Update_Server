@@ -84,11 +84,11 @@
         || specificParamValue == null || specificParamValue == undefined) {
         document.getElementById("buck_button").style.display = "none"
     } else {
-        console.log("")
+        ("")
     }
 
     var shParamValue = queryParams.get("k");
-    console.log(shParamValue === null)
+    (shParamValue === null)
     if (shParamValue === null){
         document.getElementById("pages").style.display = "block"
     } else if (shParamValue !== "") {
@@ -102,14 +102,14 @@
         var queryString = window.location.search;
         var queryParams = new URLSearchParams(queryString);
         var specificParamValue = queryParams.get("p");
-        console.log(specificParamValue)
+        (specificParamValue)
         if (isNaN(specificParamValue) || specificParamValue == null || specificParamValue == undefined) {
             specificParamValue = 1;
         }
         var new_page = Number(specificParamValue) + key
         queryParams.set("p", new_page);
         var newUrl = window.location.origin + window.location.pathname + '?' + queryParams.toString();
-        console.log(newUrl)
+        (newUrl)
         window.location.href = newUrl;
     }
 </script>

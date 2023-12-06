@@ -51,7 +51,6 @@
         }
 
         const result = await fetchData()
-        console.log(result)
         if (result["status"] == false) {
             top_alert("エラー", result["msg"], 3000)
             document.getElementById("overlay").style.display = 'none';
@@ -81,7 +80,7 @@
 
     // QRコードが読み取られたときの処理
     scanner.addListener('scan', function (content) {
-        console.log(content)
+        (content)
         document.getElementById("return_code").value=content;
         return_book()
 

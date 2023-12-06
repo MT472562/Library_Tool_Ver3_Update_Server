@@ -60,7 +60,7 @@
             }
         }, (err) => {
             if (err) {
-                console.log(err);
+                (err);
                 return
             }
             Quagga.start();
@@ -76,9 +76,9 @@
                     document.getElementById("overlay").style.display = 'block';
                     try {
                         const responseData = await fetchData(inputValue);
-                        console.log(book_data)
+                        (book_data)
                         var res = hasDuplicateBookCode(book_data, re_code)
-                        console.log(res)
+                        (res)
                         if (res == "yes") {
                             Quagga.stop();
                             document.getElementById("overlay-camera").style.display = "none";

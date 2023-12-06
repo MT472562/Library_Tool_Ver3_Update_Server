@@ -156,7 +156,7 @@
     wordInput.value = getQueryParam('word') || '';
 
     logData = {{logData | tojson | safe}};
-    console.log(logData);
+    (logData);
     var logList = document.getElementById('logList');
 
     logData.forEach(function (log) {

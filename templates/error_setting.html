@@ -1,3 +1,10 @@
+{% extends "base.html" %}
+{% block head %}
+ <link rel="stylesheet" href="/Library/img_svg_video_icon/style.css">
+<!-- スタイルシート読み込みなさい -->
+{% endblock %}
+{% block body %}
+<style>header{display: none}.grid-container{display: none}</style>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -89,7 +96,7 @@
         })
             .then(response => response.json())
             .then(res_data => {
-                console.log(res_data);
+                (res_data);
                 if (res_data["status"]==false){
                     alert("処理中にエラーが発生しました。ページをロードして再度実行してください");
                     return;
@@ -218,3 +225,5 @@
 </style>
 </body>
 </html>
+
+{% endblock %}

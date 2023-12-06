@@ -74,11 +74,11 @@
             })(i);
         }
 
-        var message = `リクエスト処理中です...\n棚卸しページにあと<span id="count">5</span>秒後に移動します。\n移動しない場合は、<a href="/inventory/${hash}">こちら</a>をクリックしてください。`;
+        var message = `リクエスト処理中です...\n棚卸しページにあと<span id="count">1</span>秒後に移動します。\n移動しない場合は、<a href="/inventory/${hash}">こちら</a>をクリックしてください。`;
         top_alert("【情報】", message, 99999);
         setTimeout(function () {
             window.location = `/inventory/${hash}`;
-        }, 5000);
+        }, 1000);
 
     }
 

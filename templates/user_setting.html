@@ -69,7 +69,7 @@
         document.getElementById("point_operation_input").style.display = 'block';
         document.getElementById("point_operation_ok").onclick = function () {
             var new_point = document.getElementById("new_point_data").value;
-            console.log(new_point);
+            (new_point);
             var post_url = "user_setting/point_operation";
             var post_data = {
                 "primary_userid": id,
@@ -84,7 +84,7 @@
             })
                 .then(response => response.json())
                 .then(res_data => {
-                    console.log(res_data);
+                    (res_data);
                     if (res_data["res_data"]["status"] == 200) {
                         alert(res_data["res_data"]["message"]);
                         document.getElementById('overlay').style.display = 'none';
@@ -108,7 +108,7 @@
         document.getElementById("mail_transmission_input").style.display = 'block';
         document.getElementById("management_user_id").innerHTML = "管理ID: "+id+"番へのメール送信";
         document.getElementById("user_name_mail").innerHTML = "ユーザー : "+username+"様へのメール送信"
-        console.log(id);
+        (id);
         document.getElementById("mail_transmission_mail_text").value = username+"様\n\n"+"--------------\n本文を入力してください\n--------------\n\n図書管理システムのご利用に際して不明な点やお困りのことがございましたら、\n" +
             "いつでもサポートチームまでお問い合わせください。\n\n" +
             "図書管理システムサポートチーム\nお問合せ先:https://forms.gle/hYsSKbNmjnPbUfyBA";
@@ -139,7 +139,7 @@
                     })
                         .then(response => response.json())
                         .then(res_data => {
-                            console.log(res_data);
+                            (res_data);
                             if (res_data["res_data"]["status"] == 200) {
                                 alert(res_data["res_data"]["message"]);
                                 document.getElementById('overlay').style.display = 'none';
