@@ -4,7 +4,7 @@
   "SystemVersion": 1.1,
   "spare": "spare",
   "spare": "spare",
-  "make_directory": ["ip_gps_data.json"],
+  "make_directory": [],
   "main.py": 1.1,
   "Maintenance.py": 1.0,
   "database_reset.py": 1.0,
@@ -41,6 +41,5 @@
   "templates/search.html": 1.1,
   "templates/test.html": 1.1,
   "templates/update_book.html": 1.1,
-  "templates/user_setting.html": 1.1,
-  "ip_gps_data.json":1.0
+  "templates/user_setting.html": 1.1
 }
