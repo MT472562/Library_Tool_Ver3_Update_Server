@@ -22,9 +22,26 @@
     <button id="return_start_button" type="button" onclick="return_book()">返却</button>
 </div>
 <button onclick="cameraon()" id="Reader_start_button">カメラで読み込む</button>
+<div id="lending_book_data">
+    {% if lental_book_count > 0%}
+    <h3>あなたの貸出中のID</h3>
+    {% for item in rental_book_list %}
+    <span style="color: #C7C7C7FF;" onmouseover="this.style.color='#ffffff'" onmouseout="this.style.color='#C7C7C7FF'"
+          onclick="input_rental_id('{{item}}')">{{ item }}</span>
+
+    {% endfor %}
+    {% else%}
+    <h3>貸出中の本はありません</h3>
+    {% endif %}
+
+
+</div>
 
 <!-- bodyタグに書く内容を書きなさい -->
 <script>
+    function input_rental_id(id) {
+        document.getElementById("return_code").value = id;
+    }
     if (location.protocol == 'http:') {
         document.getElementById("Reader_start_button").style.display="none";
     }

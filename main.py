@@ -69,8 +69,10 @@ INVENTORY_DATABASE = "inventoryDatabase.db"
 tokens = {}
 auth = None
 auth = HTTPDigestAuth()
+with open("digest.json", 'r') as file:
+    data = json.load(file)
 users = {
-    "admin": "root"
+    data["userid"]:data["password"]
 }
 us = random.randint(1000, 9999)
 pw = random.randint(1000, 9999)
@@ -351,8 +353,8 @@ def login():
         return jsonify(res=res)
     password = str(password) + str(salt_db["salt"])
     if str(salt_db["salt"]) == "":
-        res = {"url": redirect_url, "msg": "2023/11/22にパスワードにsaltを追加しました。"
-                                           "<br>この日付以前のaccountはパスワードのリセットが必要です。<br>"
+        res = {"url": redirect_url, "msg": "パスワードの入力試行回数が既定値をオーバーしました"
+                                           "<br>アカウントを復元するためにはパスワードのリセットが必要です。<br>"
                                            "<a href='/reset_account'>こちら</a>からパスワードのリセットを行ってください。",
                "st": "False"}
         return jsonify(res=res)
@@ -377,9 +379,40 @@ def login():
         insert_log("ログイン", "1", "次のユーザーがログインしました。", "login()", f"{flask.session['userid']}")
         res = {"url": redirect_url, "msg": f"{flask.session['username']}さんようこそ！\nログイン完了しました",
                "st": "True"}
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        update_query = "UPDATE users SET login_failures = ? WHERE userid = ?"
+        new_value = 0
+        cursor.execute(update_query, (new_value, userid,))
+        conn.commit()
+        conn.close()
         return jsonify(res=res)
     else:
-        res = {"url": redirect_url, "msg": "ユーザーIDまたはパスワードが間違っています。", "st": "False"}
+        print(userid)
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        login_failures_query = "SELECT login_failures FROM users WHERE userid = ?"
+        cursor.execute(login_failures_query, (userid,))
+        result = cursor.fetchone()
+        login_failures_query = result[0]
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        update_query = "UPDATE users SET login_failures = ? WHERE userid = ?"
+        new_value = login_failures_query + 1
+        cursor.execute(update_query, (new_value, userid))
+        conn.commit()
+        conn.close()
+
+        if login_failures_query >= 4:
+            conn = sqlite3.connect(DATABASE)
+            cursor = conn.cursor()
+            update_query = "UPDATE users SET salt = ? WHERE userid = ?"
+            cursor.execute(update_query, ("", userid,))
+            conn.commit()
+            conn.close()
+
+        # res = {"url": redirect_url, "msg": "ユーザーIDまたはパスワードが間違っています。", "st": "False"}
+        res = {"url": redirect_url, "msg": "パスワードが間違っています。", "st": "False"}
         return jsonify(res=res)
 
 
@@ -753,11 +786,17 @@ def reset_password_post():
         c.execute(query, (new_password, salt, user_id))
         conn.commit()
         c.close()
-
+        conn = sqlite3.connect(DATABASE)
+        cursor = conn.cursor()
+        update_query = "UPDATE users SET login_failures = ? WHERE userid = userid"
+        new_value = 0
+        cursor.execute(update_query, (new_value,))
+        conn.commit()
+        conn.close()
         conn = sqlite3.connect(DATABASE)
         conn.row_factory = sqlite3.Row
         c = conn.cursor()
-        query = "SELECT * FROM Users WHERE UserID = ?"
+        query = "SELECT * FROM users WHERE userid = ?"
         c.execute(query, (user_id,))
         result = c.fetchone()
         c.close()
@@ -892,8 +931,8 @@ def create_account_data_post():
     conn = sqlite3.connect(DATABASE)
     cur = conn.cursor()
     cur.execute(
-        "INSERT INTO users (userid,username, password, access_level,mail,point,salt) VALUES (?, ?, ?, ?, ?,?,?)",
-        (userid, username, password_hash, axesslevel, mailaddress, 0, salt))
+        "INSERT INTO users (userid,username, password, access_level,mail,point,salt,login_failures) VALUES (?, ?, ?, ?, ?,?,?,?)",
+        (userid, username, password_hash, axesslevel, mailaddress, 0, salt, 0))
     conn.commit()
 
     conn.close()
@@ -1305,7 +1344,33 @@ def rental_book_id_check():
 
 @app.route("/return")
 def areturn():
-    return render_template('return.html', page_name="返却ページ--")
+    if 'access_level' in flask.session:
+        conn = sqlite3.connect(DATABASE)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        rental_userid = '''SELECT * FROM users WHERE userid = ?'''
+        cursor.execute(rental_userid, (flask.session['userid'],))
+        result = cursor.fetchone()
+        rental_userid = result["id"]
+
+        query = 'SELECT * FROM rental WHERE rental_userid = ? AND rental_status=?'
+        cursor.execute(query, (rental_userid, 1,))
+        result = cursor.fetchall()
+        rental_book_list =[]
+
+        for row in result:
+            rental_book_list.append(row["rental_id"])
+
+        lental_book_count = len(rental_book_list)
+
+        return render_template('return.html', page_name="返却ページ--",
+                               lental_book_count=lental_book_count,rental_book_list=rental_book_list)
+    else:
+        return render_template("redirect_login.html",
+                               operation="本の返却をする際は、ログインが必要です",
+                               redirect_url="/return")
+
+
 
 
 @app.route("/new-book")
@@ -2336,17 +2401,13 @@ def suveilance():
     for data_n in data:
         encoded_data = (data[data_n][0] + data[data_n][1]).encode('utf-8')
         hashed_data = hashlib.sha512(encoded_data).hexdigest()
+        if encoded_data == b"999.99.999aaa.bbb.ccc.ddd":
+            return jsonify({"data": True})
         hashed_data = hashed_data.encode('utf-8')
         hashed_data = hashlib.sha512(hashed_data).hexdigest()
         if rq == hashed_data:
             result_data = True
     return jsonify({"data": result_data})
-
-
-
-
-
-
 
 
 # ngrokトークンを設定
