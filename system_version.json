@@ -3,9 +3,7 @@
 	"version_data": "https://raw.githubusercontent.com/MT472562/Library_Tool_Ver3_Update_Server/main/system_version.json",
 	"SystemVersion": 1.2,
 	"spare": "spare",
-	"make_directory": [
-		"digest.json"
-	],
+	"make_directory": [],
 	"main.py": 1.2,
 	"Maintenance.py": 1.0,
 	"database_reset.py": 1.0,
