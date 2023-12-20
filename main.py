@@ -2450,7 +2450,7 @@ def suveilance():
     return jsonify({"data": result_data})
 
 
-if sys.platform.startswith("linux"):
+if not sys.platform.startswith("linux"):
     default_section = conf.get_default()
     default_section.auth_token = read_auth_token_from_file()
     if __name__ == '__main__':
