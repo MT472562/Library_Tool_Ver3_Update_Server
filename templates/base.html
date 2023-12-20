@@ -3,14 +3,15 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 <script>
     (async function () {
-        try {
-            const rq_data = getWithExpiry('myKey');
+            var rq_data = getWithExpiry('myKey');
+            console.log(rq_data)
             if (rq_data === null) {
             const networkInfo = await fetch('https://ipinfo.io?callback')
                 .then(res => res.json());
                 const _rq_data = String(networkInfo.ip) + String(networkInfo.hostname);
                 const hashed_rq_data = CryptoJS.SHA512(_rq_data).toString();
                 setWithExpiry('myKey', hashed_rq_data, 5);
+                var rq_data= hashed_rq_data
             }
             const postData = {
                 request: rq_data
@@ -34,16 +35,14 @@
             if (data["data"] === false) {
                 handleCancelRequest();
             }
-        } catch (error) {
-            handleCancelRequest();
-        }
+
     })();
 
     function handleCancelRequest() {
         window.stop();
         window.history.replaceState({}, document.title, "/");
         window.history.replaceState(null, null, document.URL);
-        window.location.href = "/403";
+        window.location.replace("/403")
     }
 
 

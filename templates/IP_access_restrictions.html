@@ -3,9 +3,6 @@
 <head>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script>
-        window.onbeforeunload = function () {
-            return false;
-        };
         async function getIp() {
             try {
                 const networkInfo = await fetch('https://ipinfo.io?callback')
