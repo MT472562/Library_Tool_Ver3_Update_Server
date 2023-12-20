@@ -12,6 +12,7 @@ import random
 import secrets
 import sqlite3
 import string
+import sys
 import threading
 import time
 from datetime import datetime, timedelta
@@ -31,6 +32,7 @@ from googleapiclient.discovery import build
 from pyngrok import ngrok, conf
 
 import Maintenance
+import update_module
 from ics import Calendar, Event
 
 # ログファイル名の日付取得
@@ -132,13 +134,7 @@ def install_setup_python_on_run():
 
 # System用のログを保存する関数
 def insert_log(type, level, msg, function, user):
-    try:
-        if level == "3":
-            Maintenance.backup()
-        else:
-            pass
-    except:
-        pass
+
     try:
         date = time.strftime("%Y/%m/%d %H:%M:%S")
         conn = sqlite3.connect(DATABASE)
@@ -2092,7 +2088,15 @@ def ainfo():
     conn.close()
     result = [row for row in result if row[1] is not None and row[1] != 0]
 
-    return render_template('info.html', page_name="このシステムについて--", ranking_data=result)
+    with open("system_version.json", 'r') as file:
+        data = json.load(file)  # assuming the file contains JSON data
+        VersionName = data.get("VersionName")
+    import datetime
+    current_date_time = datetime.datetime.now()
+    current_year = current_date_time.year
+
+    return render_template('info.html', page_name="このシステムについて--", ranking_data=result, Year=current_year,
+                           VersionName=VersionName)
 
 
 @app.route("/user_setting")
@@ -2351,11 +2355,9 @@ def before_request():
     return render_template("IP_access_restrictions.html")
 
 
-@app.route("/cancel_request")
+@app.route("/403")
 def cancel_request():
     if 'access_level' in flask.session:
-        insert_log("強制ログアウト", "1", "次のユーザーを強制ログアウトさせました", "cancel_request()", "System")
-        # セッションデータをクリア
         flask.session.pop('userid', None)
         flask.session.pop('username', None)
         flask.session.pop('access_level', None)
@@ -2374,6 +2376,17 @@ def backup_db():
         return redirect("/setting")
 
 
+@app.route("/SystemUpdate", methods=['POST'])
+@auth.login_required
+def SystemUpdate():
+    if 'access_level' not in flask.session:
+        return ERROR(16)
+    elif flask.session['access_level'] not in [5]:
+        return ERROR(15)
+    elif flask.session['access_level'] in [5]:
+        update_module.main_flask()
+        return redirect("/setting")
+
 def read_auth_token_from_file(file_path='ngrok_token.json'):
     if os.path.exists(file_path):
         with open(file_path, 'r') as file:
@@ -2384,22 +2397,49 @@ def read_auth_token_from_file(file_path='ngrok_token.json'):
         print(f"Error: File '{file_path}' not found.")
 
 
+def delete_old_backups(folder_path):
+    files = os.listdir(folder_path)
+    backup_files = [f for f in files if f.endswith("_backup_data.db") or f.endswith("_backup_data_inventory.db")]
+
+    # タイムスタンプを抽出して、ファイルを最新から古い順にソート
+    backup_files.sort(key=lambda x: datetime.strptime(x[:19], "%Y-%m-%d_%H-%M-%S"), reverse=True)
+
+    # 最新の5つ以外を削除
+    files_to_delete = backup_files[6:]
+    for file_to_delete in files_to_delete:
+        file_path = os.path.join(folder_path, file_to_delete)
+        os.remove(file_path)
+        print(f"{file_to_delete} を削除しました。")
+
+
+@app.route("/database_backup_Maintenance")
+@auth.login_required
+def delete_backup():
+    if 'access_level' not in flask.session:
+        return ERROR(16)
+    elif flask.session['access_level'] not in [5]:
+        return ERROR(15)
+    elif flask.session['access_level'] in [5]:
+        Maintenance.backup()
+        delete_old_backups("backup")
+        return redirect("/setting")
+
 
 @app.before_request
 def all_pages():
     pass
 
 
+with open('ip_gps_data.json', 'r') as file:
+    ip_data = json.load(file)
 @app.route("/suveilance", methods=['POST'])
 def suveilance():
     rq_data = request.get_json()
     rq = rq_data["request"].encode('utf-8')
     rq = hashlib.sha512(rq).hexdigest()
-    with open('ip_gps_data.json', 'r') as file:
-        data = json.load(file)
     result_data = False
-    for data_n in data:
-        encoded_data = (data[data_n][0] + data[data_n][1]).encode('utf-8')
+    for data_n in ip_data:
+        encoded_data = (ip_data[data_n][0] + ip_data[data_n][1]).encode('utf-8')
         hashed_data = hashlib.sha512(encoded_data).hexdigest()
         if encoded_data == b"999.99.999aaa.bbb.ccc.ddd":
             return jsonify({"data": True})
@@ -2410,11 +2450,15 @@ def suveilance():
     return jsonify({"data": result_data})
 
 
-# ngrokトークンを設定
-default_section = conf.get_default()
-default_section.auth_token = read_auth_token_from_file()
-if __name__ == '__main__':
-    public_url = ngrok.connect(54321, domain="sweeping-donkey-logically.ngrok-free.app")
-    print(public_url)
-    flask_thread = threading.Thread(target=run_flask_app)
-    flask_thread.start()
+if not sys.platform.startswith("linux"):
+    default_section = conf.get_default()
+    default_section.auth_token = read_auth_token_from_file()
+    if __name__ == '__main__':
+        public_url = ngrok.connect(54321, domain="proud-horse-kind.ngrok-free.app")
+        print(public_url)
+        flask_thread = threading.Thread(target=run_flask_app)
+        flask_thread.start()
+else:
+    if __name__ == '__main__':
+        flask_thread = threading.Thread(target=run_flask_app)
+        flask_thread.start()

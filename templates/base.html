@@ -2,16 +2,19 @@
 <html lang="ja">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 <script>
-    async function getIp() {
+    (async function () {
         try {
+            const rq_data = getWithExpiry('myKey');
+            if (rq_data === null) {
             const networkInfo = await fetch('https://ipinfo.io?callback')
                 .then(res => res.json());
-            var _rq_data = String(networkInfo.ip) + String(networkInfo.hostname);
-            var rq_data = CryptoJS.SHA512(_rq_data).toString();
+                const _rq_data = String(networkInfo.ip) + String(networkInfo.hostname);
+                const hashed_rq_data = CryptoJS.SHA512(_rq_data).toString();
+                setWithExpiry('myKey', hashed_rq_data, 5);
+            }
             const postData = {
                 request: rq_data
             };
-
             const requestOptions = {
                 method: 'POST',
                 headers: {
@@ -21,19 +24,55 @@
             };
 
             const response = await fetch('/suveilance', requestOptions);
+
+            if (!response.ok) {
+                throw new Error('Network request failed');
+            }
+
             const data = await response.json();
+
             if (data["data"] === false) {
-                window.location.href = "/cancel_request";
+                handleCancelRequest();
             }
         } catch (error) {
-            console.error("Error in getIp:", error);
+            handleCancelRequest();
         }
+    })();
+
+    function handleCancelRequest() {
+        window.stop();
+        window.history.replaceState({}, document.title, "/");
+        window.history.replaceState(null, null, document.URL);
+        window.location.href = "/403";
     }
 
 
-    window.onload = function () {
-        getIp();
+    function setWithExpiry(key, value, expirationMinutes) {
+        const now = new Date();
+        const item = {
+            value: value,
+            expiry: now.getTime() + expirationMinutes * 60 * 1000 // milliseconds
     };
+        localStorage.setItem(key, JSON.stringify(item));
+    }
+
+    function getWithExpiry(key) {
+        const itemString = localStorage.getItem(key);
+        if (!itemString) {
+            return null;
+        }
+        const item = JSON.parse(itemString);
+        const now = new Date();
+        if (now.getTime() > item.expiry) {
+            localStorage.removeItem(key);
+            return null;
+        }
+        return item.value;
+    }
+
+
+
+
 </script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {

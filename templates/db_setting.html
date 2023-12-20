@@ -25,6 +25,9 @@
     <button onclick="redirectTo('/backup_db');top_alert('実行中','処理が終了するまでページを閉じないでください\nバックアップを作成中....\n詳細はログを確認してください',999999)">
         データベースバックアップ
     </button>
+    <button onclick="SystemUpdate()">システムアップデート</button>
+    <button onclick="redirectTo('/database_backup_Maintenance')">バックアップファイル整理</button>
+
 </div>
 <script>
         function redirectTo(url) {
@@ -82,6 +85,44 @@
 
             } else if (response.toLowerCase() === 'n') {
                 top_alert("情報", "Maintenanceをキャンセルしました。");
+                // ここにキャンセル時のコードを追加
+            } else {
+                top_alert("情報", "無効な入力です。'y'または'n'で答えてください。");
+                // ここに無効な入力時のコードを追加
+            }
+
+        }
+
+        function SystemUpdate() {
+            const response = prompt("SystemのUpdateを行うと、以下の操作が行われます。\n----------------------------\n" +
+                "データベースのフルバックアップ\n" +
+                "Update対象のSystemファイルのUpdate\n"+
+                "図書管理システム起動Serverの再起動\n"+
+                "----------------------------\n" +
+                "SystemUpdateをほんとに開始しますか？ (y/n): ");
+
+            if (response.toLowerCase() === 'y') {
+                top_alert("処理開始", "システムアップデートを開始...\n\n " +
+                    "<h3>すべての処理が終了するまでがページを閉じないでください</h3>", 120000);
+                document.getElementById("overlay").style.display = 'block';
+                fetch('/SystemUpdate', {
+                    method: 'POST', // または 'GET' など、リクエストの種類に応じて変更
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // 他に必要なヘッダーがあれば追加
+                    },
+                    body: JSON.stringify({
+                        // リクエスト本文があれば追加
+                    }),
+                }).then(response => {
+                    // リクエストが成功した場合の処理
+                    top_alert("情報", '<h2>正常に処理が完了しました!!ページをリロードします</h2>');
+                }).catch(error => {
+                    // エラーが発生した場合の処理
+                    console.error('エラーが発生しました。', error);
+                });
+            } else if (response.toLowerCase() === 'n') {
+                top_alert("情報", "システムアップデートをキャンセルしました。");
                 // ここにキャンセル時のコードを追加
             } else {
                 top_alert("情報", "無効な入力です。'y'または'n'で答えてください。");

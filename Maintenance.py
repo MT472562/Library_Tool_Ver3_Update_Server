@@ -77,9 +77,9 @@ def backup():
     now = datetime.datetime.now()
     now = now.strftime("%Y-%m-%d_%H-%M-%S")
     original_db_path = "database.db"
-    backup_db_path = f"backup/backup_data_{now}.db"
+    backup_db_path = f"backup/{now}_backup_data.db"
     original_db_path_inventory = "inventoryDatabase.db"
-    backup_db_path_inventory = f"backup/backup_data_inventory_{now}.db"
+    backup_db_path_inventory = f"backup/{now}_backup_data_inventory.db"
     try:
         shutil.copy2(original_db_path, backup_db_path)
         shutil.copy2(original_db_path_inventory, backup_db_path_inventory)
