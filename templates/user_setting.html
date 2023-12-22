@@ -84,7 +84,6 @@
             })
                 .then(response => response.json())
                 .then(res_data => {
-                    (res_data);
                     if (res_data["res_data"]["status"] == 200) {
                         alert(res_data["res_data"]["message"]);
                         document.getElementById('overlay').style.display = 'none';
@@ -107,8 +106,7 @@
         document.getElementById('overlay').style.display = 'block';
         document.getElementById("mail_transmission_input").style.display = 'block';
         document.getElementById("management_user_id").innerHTML = "管理ID: "+id+"番へのメール送信";
-        document.getElementById("user_name_mail").innerHTML = "ユーザー : "+username+"様へのメール送信"
-        (id);
+        document.getElementById("user_name_mail").innerHTML = "ユーザー : "+username+"様へのメール送信";
         document.getElementById("mail_transmission_mail_text").value = username+"様\n\n"+"--------------\n本文を入力してください\n--------------\n\n図書管理システムのご利用に際して不明な点やお困りのことがございましたら、\n" +
             "いつでもサポートチームまでお問い合わせください。\n\n" +
             "図書管理システムサポートチーム\nお問合せ先:https://forms.gle/hYsSKbNmjnPbUfyBA";
