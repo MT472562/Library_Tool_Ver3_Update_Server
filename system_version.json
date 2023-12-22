@@ -4,7 +4,7 @@
 	"SystemVersion": 1.52,
 	"VersionName": "第3号図書管理システム-Version1.5-2β",
 	"make_directory": [],
-	"main.py": 1.6,
+	"main.py": 1.5,
 	"Maintenance.py": 1.1,
 	"database_reset.py": 1.1,
 	"Install_check.py": 1.1,
