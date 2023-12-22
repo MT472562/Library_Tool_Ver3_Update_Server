@@ -39,6 +39,14 @@
 <button onclick="QR_Reader()" id="Reader_start_button">読み取り開始</button>
 
 <script>
+    function hasDuplicateBookCode(dataList, value) {
+        for (var i = 0; i < dataList.length; i++) {
+            if (dataList[i]["book_code"].toString() === value.toString()) {
+                return "yes";
+            }
+        }
+        return "no";
+    }
     if (location.protocol == 'http:') {
         document.getElementById("Reader_start_button").style.display="none";
     }
@@ -78,7 +86,7 @@
                         const responseData = await fetchData(inputValue);
                         (book_data)
                         var res = hasDuplicateBookCode(book_data, re_code)
-                        (res)
+                        // (res)
                         if (res == "yes") {
                             Quagga.stop();
                             document.getElementById("overlay-camera").style.display = "none";
@@ -99,16 +107,6 @@
         )
         ;
     }
-
-    function hasDuplicateBookCode(dataList, value) {
-        for (var i = 0; i < dataList.length; i++) {
-            if (dataList[i]["book_code"].toString() === value.toString()) {
-                return "yes";
-            }
-        }
-        return "no";
-    }
-
 
 
     let book_data = [];

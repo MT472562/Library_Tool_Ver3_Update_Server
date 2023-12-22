@@ -28,7 +28,6 @@
     {% for item in rental_book_list %}
     <span style="color: #C7C7C7FF;" onmouseover="this.style.color='#ffffff'" onmouseout="this.style.color='#C7C7C7FF'"
           onclick="input_rental_id('{{item}}')">{{ item }}</span>
-
     {% endfor %}
     {% else%}
     <h3>貸出中の本はありません</h3>

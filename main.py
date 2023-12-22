@@ -1355,7 +1355,10 @@ def areturn():
         rental_book_list =[]
 
         for row in result:
-            rental_book_list.append(row["rental_id"])
+            rental_id = row["rental_id"]
+            # 重複をチェックしてから追加
+            if rental_id not in rental_book_list:
+                rental_book_list.append(rental_id)
 
         lental_book_count = len(rental_book_list)
 
@@ -2450,7 +2453,7 @@ def suveilance():
     return jsonify({"data": result_data})
 
 
-if sys.platform.startswith("linux"):
+if not sys.platform.startswith("linux"):
     default_section = conf.get_default()
     default_section.auth_token = read_auth_token_from_file()
     if __name__ == '__main__':
