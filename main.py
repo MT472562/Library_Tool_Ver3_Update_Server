@@ -3,7 +3,6 @@
 import base64
 import binascii
 import hashlib
-import ipaddress
 import json
 import logging
 import math
@@ -12,7 +11,6 @@ import random
 import secrets
 import sqlite3
 import string
-import sys
 import threading
 import time
 from datetime import datetime, timedelta
@@ -29,7 +27,6 @@ from flask import request
 from flask_httpauth import HTTPDigestAuth
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
-from pyngrok import ngrok, conf
 
 import Maintenance
 import update_module
@@ -104,7 +101,6 @@ def delete_file(file_path):
         else:
             pass
     except Exception as e:
-        print(e)
         insert_log("ファイルの削除に失敗しました", "2",
                    f"システム処理で次のファイルの削除に失敗しました。。\n{file_path}\n{e}", "delete_file()",
                    "System")
@@ -128,7 +124,7 @@ def MaintenanceRun():
 @app.route("/install_setup_python_on_run")
 def install_setup_python_on_run():
     import Install_check
-    Install_check.main()  # 関数を呼ぶためには () を付ける必要があります
+    Install_check.main()
     return redirect("/")
 
 
@@ -384,7 +380,6 @@ def login():
         conn.close()
         return jsonify(res=res)
     else:
-        print(userid)
         conn = sqlite3.connect(DATABASE)
         cursor = conn.cursor()
         login_failures_query = "SELECT login_failures FROM users WHERE userid = ?"
@@ -1594,7 +1589,7 @@ def file_download():
 
 @app.route("/db_log", methods=['GET'])
 @auth.login_required
-def bd_log():
+def db_log():
     if 'access_level' not in flask.session:
         return render_template('redirect_login.html',
                                operation="データベースログ管理機能を利用するには、ログインする必要があります。")
@@ -1602,7 +1597,7 @@ def bd_log():
         return ERROR(1)
     elif flask.session['access_level'] in [5, 4]:
         insert_log("ログ確認ページへのアクセス", "2", f"次のユーザーがシステムログ確認ページへアクセスしました。",
-                   "bd_log()", flask.session['userid'])
+                   "db_log()", flask.session['userid'])
         start_date = request.args.get('start_date')
         end_date = request.args.get('end_date')
         level = request.args.get('level')
@@ -2342,20 +2337,22 @@ def run_flask_app():
     app.run(port=54321, host="0.0.0.0")
 
 
-ALLOW_NETWORKS = ["127.0.0.1", "192.168.3.7", "10.7.100.94"]
 
 
 # 本番環境ではALLOW_NETWORKSを変更してください
-@app.before_request
-def before_request():
-    remote_addr = ipaddress.ip_address(request.remote_addr)
-    app.logger.info(remote_addr)
-    for allow_network in ALLOW_NETWORKS:
-        ip_network = ipaddress.ip_network(allow_network)
-        if remote_addr in ip_network:
-            app.logger.info(ip_network)
-            return
-    return render_template("IP_access_restrictions.html")
+# IPアドレスによるフィルタリングは常時有効なわけではありません
+# 必要な場合に有効にしてください
+# ALLOW_NETWORKS = ["127.0.0.1", "192.168.3.7", "10.7.100.94"]
+# @app.before_request
+# def before_request():
+#     remote_addr = ipaddress.ip_address(request.remote_addr)
+#     app.logger.info(remote_addr)
+#     for allow_network in ALLOW_NETWORKS:
+#         ip_network = ipaddress.ip_network(allow_network)
+#         if remote_addr in ip_network:
+#             app.logger.info(ip_network)
+#             return
+#     return render_template("IP_access_restrictions.html")
 
 
 @app.route("/403")
@@ -2397,7 +2394,7 @@ def read_auth_token_from_file(file_path='ngrok_token.json'):
             token_data = data.get("token")
             return token_data
     else:
-        print(f"Error: File '{file_path}' not found.")
+        pass
 
 
 def delete_old_backups(folder_path):
@@ -2412,7 +2409,6 @@ def delete_old_backups(folder_path):
     for file_to_delete in files_to_delete:
         file_path = os.path.join(folder_path, file_to_delete)
         os.remove(file_path)
-        print(f"{file_to_delete} を削除しました。")
 
 
 @app.route("/database_backup_Maintenance")
@@ -2453,15 +2449,15 @@ def suveilance():
     return jsonify({"data": result_data})
 
 
-if sys.platform.startswith("linux"):
-    default_section = conf.get_default()
-    default_section.auth_token = read_auth_token_from_file()
-    if __name__ == '__main__':
-        public_url = ngrok.connect(54321, domain="proud-horse-kind.ngrok-free.app")
-        print(public_url)
+if __name__ == '__main__':
         flask_thread = threading.Thread(target=run_flask_app)
         flask_thread.start()
-else:
-    if __name__ == '__main__':
-        flask_thread = threading.Thread(target=run_flask_app)
-        flask_thread.start()
+
+# if sys.platform.startswith("linux"):
+#     default_section = conf.get_default()
+#     default_section.auth_token = read_auth_token_from_file()
+#     if __name__ == '__main__':
+#         public_url = ngrok.connect(54321, domain="proud-horse-kind.ngrok-free.app")
+#         flask_thread = threading.Thread(target=run_flask_app)
+#         flask_thread.start()
+# else:
