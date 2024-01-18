@@ -2327,7 +2327,7 @@ def new_date_in():
 
 def run_flask_app():
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=3)
-    app.run(port=80, host="0.0.0.0")
+    app.run(port=54321, host="0.0.0.0")
 
 
 @app.route("/403")
@@ -2385,7 +2385,7 @@ def support():
         data = request.get_json()
         key1_value = data.get('key1', None)
         default_section.auth_token = key1_value
-        public_url = ngrok.connect(80)
+        public_url = ngrok.connect(54321)
         public_url = str(public_url)
         match = re.search(r'https://[^"]+', public_url)
         if match:
