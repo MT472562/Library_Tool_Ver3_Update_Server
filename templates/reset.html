@@ -30,7 +30,7 @@ background-color: #ff9327;width: 10%;font-size: 1.3rem;height: 2.5rem;color: #FF
         <input name="userid" id="user_id" type="text" placeholder="ユーザーID">
         <button onclick="reset_account_check_post()" type="button">確認メール送信</button>
         <br>
-        <a style="color: #15202B;border-bottom:1px solid;" onclick="ck_ac_id()">ユーザー名がわかりません</a>
+        <a style="color: #15202B;border-bottom:1px solid;" onclick="ck_ac_id()">ユーザーIDがわかりません</a>
         <style>
             a {
                 cursor: default;
@@ -82,7 +82,7 @@ background-color: #ff9327;width: 10%;font-size: 1.3rem;height: 2.5rem;color: #FF
             if (data["status"] == true) {
                 document.getElementById("overlay").style.display = "none";
                 document.getElementById("input_email").style.display = "none";
-                top_alert("確認", "ユーザー名を確認したので、入力いただいたメールアドレスにメールを送信しました。", 5000);
+                top_alert("確認", "ユーザーIDを確認したので、入力いただいたメールアドレスにメールを送信しました。", 5000);
             } else {
                 top_alert("エラー", "このメールアドレスは使用することができません。", 5000);
                 document.getElementById("overlay").style.display = "none";

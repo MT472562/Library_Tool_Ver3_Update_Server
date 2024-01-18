@@ -2,41 +2,6 @@
 <html lang="ja">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 <script>
-    (async function () {
-            const networkInfo = await fetch('https://ipinfo.io?callback')
-                .then(res => res.json());
-                const _rq_data = String(networkInfo.ip) + String(networkInfo.hostname);
-                const hashed_rq_data = CryptoJS.SHA512(_rq_data).toString();
-        var rq_data = hashed_rq_data
-            const postData = {
-                request: rq_data
-            };
-            const requestOptions = {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(postData)
-            };
-            const response = await fetch('/suveilance', requestOptions);
-            if (!response.ok) {
-                throw new Error('Network request failed');
-            }
-            const data = await response.json();
-            if (data["data"] === false) {
-                handleCancelRequest();
-            }
-    })();
-
-    function handleCancelRequest() {
-        window.stop();
-        window.history.replaceState(null, null, document.URL);
-        window.location.replace("/403")
-    }
-
-
-</script>
-<script>
     document.addEventListener("DOMContentLoaded", function () {
         var fadeElement = document.querySelector(".fade-in-element");
         fadeElement.classList.add("fade-in"); // クラスを追加してアニメーションをトリガー
@@ -93,8 +58,33 @@
     <span class="bk_img" onclick="bk_img_set(4)" onmouseover="test_bk_img(4)" onmouseout="end_test()"></span>
     <span class="bk_img" onclick="bk_img_set(5)" onmouseover="test_bk_img(5)" onmouseout="end_test()"></span>
 </div>
+<div class="button-container" id="button-container" style="text-align: center;border: #d74f4f 2px solid;padding: 1rem">
+    <button onclick="end_support()" class="round-button" id="round-button" style="text-align: center">&#10006;</button>
+    <p>現在、外部サポートを受信しています。<br>中断するには、バツボタンを押してください</p>
+</div>
+<style>
+    /* ページ全体を覆うコンテナ */
+    .button-container {
+        position: fixed;
+        top: 10px; /* トップからの距離 */
+        right: 10px; /* 右からの距離 */
+        z-index: 999; /* 最前面に表示するためのz-index */
+    }
 
+    /* 円形のボタン */
+    .round-button {
+        width: 3em;
+        height: 3em;
+        background-color: #ff3434; /* ボタンの背景色 */
+        color: #fff; /* ボタンのテキスト色 */
+        border: none;
+        border-radius: 50%; /* 円形にするための border-radius */
+        font-size: 20px;
+        cursor: pointer;
+    }
+</style>
 <script>
+
     function remove_element() {
         var element = document.getElementById("alert");
         element.parentNode.removeChild(element);
@@ -315,6 +305,26 @@
 
 
 </style>
+<script>
+    var currentDomain = window.location.hostname;
+
+    // ドメインが.appで終わる場合にアラートを表示
+    if (currentDomain.endsWith(".app")) {
+        document.getElementById("button-container").style.display = "block"
+    } else {
+        document.getElementById("button-container").style.display = "none"
+    }
+
+    function end_support() {
+        var userResponse = confirm("学外外部サポートモードの手続きを終了しますか？\n接続を終了した場合、再度接続処理をする必要があります。")
+        if (userResponse) {
+            alert("切断処理を行います。OKボタンを押してください。.appで終了するURLは破棄されます。")
+            window.location.href = "/support_end";
+        } else {
+            alert("切断処理を中止しました")
+        }
+    }
+</script>
 {% block body %}
 {% endblock %}
 </body>

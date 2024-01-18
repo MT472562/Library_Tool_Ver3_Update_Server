@@ -26,6 +26,9 @@
 
     </div>
 </div>
+<div id="onkey_down_data_print_div">
+    <h1 id="onkey_down_data_print"></h1>
+</div>
 <footer>
     <a href="https://youtube.com/playlist?list=PLRwpS3a_WpxgzBBoWAzGpbFkMxaIrX7wM&si=uTFAHPGOIsouGIQa">YouTube</a>
     <a href="https://github.com/MT472562/Library_Tool_Ver3">GitHub</a>
@@ -35,11 +38,121 @@
     <p>&copy; 2022-{{Year}} Slack:TM</p>
     <p>ⓥ{{VersionName}}</p>
 </footer>
+<style>
+
+    #onkey_down_data_print_div {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        width: 16%;
+        height: auto;
+        background-color: #15202B;
+        padding: 0;
+        margin: 0;
+        border-radius: 1em;
+        display: none;
+
+    }
+
+    #onkey_down_data_print {
+        padding: 0;
+        margin: 0;
+        color: #FFFFFF;
+        font-size: 10em;
+    }
+</style>
 <script>
     if ("{{ session['username'] }}" == "") {
         document.getElementById("login_status").style.display = "none";
     } else {
         document.getElementById("login_url_set").style.display = "none";
     }
+
+    function checkCharacter(inputList, targetChar) {
+        for (let i = 0; i < inputList.length; i++) {
+            if (String.fromCharCode(inputList[i]) === targetChar) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    let sequence = "";
+    const targetSequence = "38384040373937396665";
+    // const targetSequence = "38";
+
+    document.addEventListener("keydown", function (event) {
+        let targetCharacter = String.fromCharCode(event.keyCode);
+        let key_list = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
+        if (checkCharacter(key_list, targetCharacter)) {
+            document.getElementById("onkey_down_data_print_div").style.display = "block";
+            let value;
+            const keyMap = {38: "↑", 40: "↓", 37: "←", 39: "→", 66: "B", 65: "A"};
+            value = keyMap[event.keyCode] || "";
+            document.getElementById("onkey_down_data_print").innerHTML = value;
+        } else {
+            document.getElementById("onkey_down_data_print_div").style.display = "none";
+        }
+        sequence += event.keyCode;
+        if (sequence.endsWith(targetSequence)) {
+            sequence = "";
+            document.getElementById("onkey_down_data_print_div").style.display = "none";
+            var userResponse = confirm("学外外部サポートモードへの切り替えて続きをします。\n以下の事項に同意をしてください。\n\n学外サポートモードでは、外部にポートを公開します。" +
+                "\n許可をされたアカウントにログインした状態でないと、外部サポートが許可されていません。\n信用できる人物からのみアクセスキーを次の画面で入力してください" +
+                "\n\n以上の注意事項に同意をしましたか？")
+            if (userResponse) {
+                var userResponse = confirm("実行権限を確認します。\n外部サポートモードの実行にはアクセスレベル5が必要になります。\n実行権限に進みますか？");
+                if (userResponse) {
+                    if ("{{ session['access_level'] }}" == 5 || "{{ session['access_level'] }}" == "5") {
+                        var key = prompt("サポート管理者から渡されたAPIKeyを入力してください")
+                        async function postData(url = '', data = {}) {
+                            // デフォルトのオプションをセット
+                            const options = {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(data)
+                            };
+
+                            const response = await fetch(url, options);
+
+                            // レスポンスをJSONとして解釈
+                            const responseData = await response.json();
+
+                            // ここでresponseDataを使って何かしらの処理を行う
+                            while (document.body.firstChild) {
+                                document.body.removeChild(document.body.firstChild);
+                            }
+
+                            // 新しいHTMLコンテンツを追加
+                            document.body.innerHTML = responseData;
+                        }
+
+                        // 使用例
+                        const apiUrl = '/support'; // 送信先のAPIのURL
+                        const postDataObject = {
+                            key1: key
+                            // 送信したいデータをオブジェクトとしてセット
+                        };
+
+                        // postData関数を呼び出し、POSTリクエストを送信
+                        postData(apiUrl, postDataObject);
+                        // window.location.href="/support"
+                    } else {
+                        alert("アカウントの実行権限が不足しています。アカウントレベル5のアカウントで実行してください")
+                    }
+                } else {
+                    alert("処理を中断します。");
+                }
+            } else {
+                alert("処理を中断します。");
+            }
+
+        }
+    });
+
 </script>
 {% endblock %}

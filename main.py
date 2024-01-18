@@ -1,4 +1,3 @@
-# 1.1
 # ライブラリ読み込み
 import base64
 import binascii
@@ -8,6 +7,7 @@ import logging
 import math
 import os
 import random
+import re
 import secrets
 import sqlite3
 import string
@@ -27,24 +27,20 @@ from flask import request
 from flask_httpauth import HTTPDigestAuth
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
+from pyngrok import ngrok, conf
 
 import Maintenance
 import update_module
 from ics import Calendar, Event
-
-# ログファイル名の日付取得
 today = datetime.now()
-# ロギングの基本設定
 logging.basicConfig(filename=f'logs/{today.strftime("%Y-%m-%d")}.log', level=logging.DEBUG,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-# コンソールにもログを出力するためのハンドラを追加
 console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.DEBUG)  # ここでログレベルを指定します
+console_handler.setLevel(logging.DEBUG)
 console_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
 logging.getLogger().addHandler(console_handler)
-# 1週間前の日付を計算してログファイルの削除条件を設定
 one_week_ago = (today - timedelta(days=7)).strftime('%Y-%m-%d.log')
-# ログファイルの一覧を取得
+
 files = os.listdir('./logs')
 for file in files:
     if one_week_ago > file:
@@ -73,9 +69,6 @@ with open("digest.json", 'r') as file:
 users = {
     data["userid"]:data["password"]
 }
-us = random.randint(1000, 9999)
-pw = random.randint(1000, 9999)
-users.update({str(us): str(pw)})
 
 
 @auth.get_password
@@ -2334,25 +2327,7 @@ def new_date_in():
 
 def run_flask_app():
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=3)
-    app.run(port=54321, host="0.0.0.0")
-
-
-
-
-# 本番環境ではALLOW_NETWORKSを変更してください
-# IPアドレスによるフィルタリングは常時有効なわけではありません
-# 必要な場合に有効にしてください
-# ALLOW_NETWORKS = ["127.0.0.1", "192.168.3.7", "10.7.100.94"]
-# @app.before_request
-# def before_request():
-#     remote_addr = ipaddress.ip_address(request.remote_addr)
-#     app.logger.info(remote_addr)
-#     for allow_network in ALLOW_NETWORKS:
-#         ip_network = ipaddress.ip_network(allow_network)
-#         if remote_addr in ip_network:
-#             app.logger.info(ip_network)
-#             return
-#     return render_template("IP_access_restrictions.html")
+    app.run(port=80, host="0.0.0.0")
 
 
 @app.route("/403")
@@ -2387,14 +2362,6 @@ def SystemUpdate():
         update_module.main_flask()
         return redirect("/setting")
 
-def read_auth_token_from_file(file_path='ngrok_token.json'):
-    if os.path.exists(file_path):
-        with open(file_path, 'r') as file:
-            data = json.load(file)  # assuming the file contains JSON data
-            token_data = data.get("token")
-            return token_data
-    else:
-        pass
 
 
 def delete_old_backups(folder_path):
@@ -2411,6 +2378,36 @@ def delete_old_backups(folder_path):
         os.remove(file_path)
 
 
+@app.route("/support", methods=['POST'])
+def support():
+    default_section = conf.get_default()
+    try:
+        data = request.get_json()
+        key1_value = data.get('key1', None)
+        default_section.auth_token = key1_value
+        public_url = ngrok.connect(80)
+        public_url = str(public_url)
+        match = re.search(r'https://[^"]+', public_url)
+        if match:
+            extracted_url = match.group(0)
+            extracted_url_text = f"コネクトに成功しました。現在外部サポートが受けられる状態です。<br>以下のURLをサポート先に公開してください"
+            print(f"抽出されたURL: {extracted_url}")
+        else:
+            extracted_url = "/"
+            extracted_url_text = "コネクトに失敗しました。しばらく時間をおいてお試しください"
+    except:
+        extracted_url = "/"
+        extracted_url_text = "コネクトに失敗しました。しばらく時間をおいてお試しください"
+    return jsonify(
+        f"<p style='text-align:center;'>{extracted_url_text}<br><a href='{extracted_url}'>{extracted_url}</a></p>")
+
+
+@app.route("/support_end")
+def kill():
+    ngrok.kill()
+    return "<h1>Disconnected</h1><a href='/'>戻る</a>"
+
+
 @app.route("/database_backup_Maintenance")
 @auth.login_required
 def delete_backup():
@@ -2424,40 +2421,6 @@ def delete_backup():
         return redirect("/setting")
 
 
-@app.before_request
-def all_pages():
-    pass
-
-
-with open('ip_gps_data.json', 'r') as file:
-    ip_data = json.load(file)
-@app.route("/suveilance", methods=['POST'])
-def suveilance():
-    rq_data = request.get_json()
-    rq = rq_data["request"].encode('utf-8')
-    rq = hashlib.sha512(rq).hexdigest()
-    result_data = False
-    for data_n in ip_data:
-        encoded_data = (ip_data[data_n][0] + ip_data[data_n][1]).encode('utf-8')
-        hashed_data = hashlib.sha512(encoded_data).hexdigest()
-        if encoded_data == b"999.99.999aaa.bbb.ccc.ddd":
-            return jsonify({"data": True})
-        hashed_data = hashed_data.encode('utf-8')
-        hashed_data = hashlib.sha512(hashed_data).hexdigest()
-        if rq == hashed_data:
-            result_data = True
-    return jsonify({"data": result_data})
-
-
 if __name__ == '__main__':
         flask_thread = threading.Thread(target=run_flask_app)
         flask_thread.start()
-
-# if sys.platform.startswith("linux"):
-#     default_section = conf.get_default()
-#     default_section.auth_token = read_auth_token_from_file()
-#     if __name__ == '__main__':
-#         public_url = ngrok.connect(54321, domain="proud-horse-kind.ngrok-free.app")
-#         flask_thread = threading.Thread(target=run_flask_app)
-#         flask_thread.start()
-# else:

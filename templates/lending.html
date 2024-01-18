@@ -112,6 +112,11 @@
     let book_data = [];
     async function get_data() {
         const inputValue = document.getElementById("management_code").value;
+        const nonNumericRegex = /\D/;
+
+        if (nonNumericRegex.test(inputValue)) {
+            top_alert("エラー", "10....から始まるバーコードを入力してください。A10...の場合も、10..から入力してください")
+        }
         var re_code = inputValue.replace(/A/g, '');
         var res = hasDuplicateBookCode(book_data, re_code)
         if (res == "yes") {

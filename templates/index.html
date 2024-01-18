@@ -24,29 +24,6 @@
         height: 100%;
     }
 
-    #onkey_down_data_print_div {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        text-align: center;
-        width: 16%;
-        height: auto;
-        background-color: #15202B;
-        padding: 0;
-        margin: 0;
-        border-radius: 1rem;
-        display: none;
-
-    }
-
-    #onkey_down_data_print {
-        padding: 0;
-        margin: 0;
-        color: #FFFFFF;
-        font-size: 10rem;
-    }
-
 </style>
 <script>
     if ("{{ session['username'] }}" === "" || "{{ session['username'] }}" === undefined) {
@@ -58,75 +35,6 @@
             10000);
 
     }
-
-    function checkCharacter(inputList, targetChar) {
-        for (let i = 0; i < inputList.length; i++) {
-            if (String.fromCharCode(inputList[i]) === targetChar) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    let sequence = "";
-    const targetSequence = "38384040373937396665";
-    // const targetSequence = "38";
-
-    document.addEventListener("keydown", function (event) {
-        let targetCharacter = String.fromCharCode(event.keyCode);
-        let key_list = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
-        if (checkCharacter(key_list, targetCharacter)) {
-            document.getElementById("onkey_down_data_print_div").style.display = "block";
-            let value;
-            const keyMap = {38: "↑", 40: "↓", 37: "←", 39: "→", 66: "B", 65: "A"};
-            value = keyMap[event.keyCode] || "";
-            document.getElementById("onkey_down_data_print").innerHTML = value;
-        } else {
-            document.getElementById("onkey_down_data_print_div").style.display = "none";
-        }
-        sequence += event.keyCode;
-        if (sequence.endsWith(targetSequence)) {
-            sequence = "";
-            document.getElementById("onkey_down_data_print_div").style.display = "none";
-            doSomething();
-        }
-    });
-
-
-    function doSomething() {
-        const st = "{{ st['st'] }}";
-
-        if (st === "False") {
-            // const video = document.querySelector("myVideo");
-            // top_alert("Command has been received!", "<a href='https://www.youtube.com/watch?v=Snn2gWq-3KY'>Aqua Cat [Minato Aqua/hololive]\n</a>", 5000);
-            // document.getElementById("grid-container").style.display = "none";
-            // const playMedia = () => {
-            //     video.play();
-            // };
-            // const picupbook = document.getElementById("picupbook");
-            // const header = document.querySelector('header');
-            // const body = document.querySelector('body');
-            // const myVideo = document.getElementById("myVideo");
-            //
-            // picupbook.style.display = "none";
-            // header.style.display = 'none';
-            // body.style.backgroundColor = "#183858";
-            //
-            // playMedia();
-            //
-            // setTimeout(() => {
-            //     myVideo.style.display = "block";
-            // }, 8650);
-            //
-            // video.addEventListener("ended", () => {
-            //     window.location.replace("/setting");
-            // });
-            window.location.replace("/setting")
-        } else {
-            window.location.href = "/setting";
-        }
-    }
-
 
 </script>
 
