@@ -103,9 +103,9 @@
                 "\n許可をされたアカウントにログインした状態でないと、外部サポートが許可されていません。\n信用できる人物からのみアクセスキーを次の画面で入力してください" +
                 "\n\n以上の注意事項に同意をしましたか？")
             if (userResponse) {
-                var userResponse = confirm("実行権限を確認します。\n外部サポートモードの実行にはアクセスレベル5が必要になります。\n実行権限に進みますか？");
+                var userResponse = confirm("実行権限を確認します。\n外部サポートモードの実行にはアクセスレベル3以上が必要になります。\n実行権限に進みますか？");
                 if (userResponse) {
-                    if ("{{ session['access_level'] }}" == 5 || "{{ session['access_level'] }}" == "5") {
+                    if ("{{ session['access_level'] }}" == 5 || "{{ session['access_level'] }}" == "5"||"{{ session['access_level'] }}" == 4 || "{{ session['access_level'] }}" == "4"||"{{ session['access_level'] }}" == 3 || "{{ session['access_level'] }}" == "3") {
                         var key = prompt("サポート管理者から渡されたAPIKeyを入力してください")
                         async function postData(url = '', data = {}) {
                             // デフォルトのオプションをセット
