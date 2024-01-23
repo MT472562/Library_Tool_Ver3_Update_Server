@@ -3,7 +3,7 @@
 	"version_data": "https://raw.githubusercontent.com/MT472562/Library_Tool_Ver3_Update_Server/main/system_version.json",
 	"SystemVersion": 3,
 	"VersionName": "第3号図書管理システム-Version3.0 リリース版",
-	"make_directory": [return.py],
+	"make_directory": ["return.py"],
 	"main.py": 3,
 	"return.py":3,
 	"Maintenance.py": 3,
