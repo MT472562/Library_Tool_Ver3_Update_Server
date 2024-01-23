@@ -32,6 +32,7 @@ from pyngrok import ngrok, conf
 import Maintenance
 import update_module
 from ics import Calendar, Event
+
 today = datetime.now()
 logging.basicConfig(filename=f'logs/{today.strftime("%Y-%m-%d")}.log', level=logging.DEBUG,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -69,7 +70,13 @@ with open("digest.json", 'r') as file:
 users = {
     data["userid"]:data["password"]
 }
+app.config['SUPPORT_CHINESE'] = False
+app.config['SUPPORT_URL'] = ""
 
+
+@app.route('/api/support_chinese', methods=['GET'])
+def get_support_chinese():
+    return jsonify(support_chinese=app.config['SUPPORT_CHINESE'], support_url=app.config['SUPPORT_URL'])
 
 @auth.get_password
 def get_pw(username):
@@ -174,7 +181,7 @@ def mail_post(mail_text, mail_to, title):
         insert_log("メールの送信", "1",
                    f"メールアドレス[{mail_to}]に対して[{title}]というメールの送信を行いました。", "mail_post()",
                    f"{flask.session['userid']}")
-    except:
+    except Exception as e:
         insert_log("メールの送信", "1",
                    f"メールアドレス[{mail_to}]に対して[{title}]というメールの送信を行いました。", "mail_post()",
                    f"未ログイン")
@@ -182,32 +189,38 @@ def mail_post(mail_text, mail_to, title):
 
 # 引数で入力されたリストのpathをメールに添付して送信する関数
 def mail_post_on_file(mail_text, mail_to, title, attachment_paths):
-    scopes = ['https://mail.google.com/']
-    creds = Credentials.from_authorized_user_file('token.json', scopes)
-    service = build('gmail', 'v1', credentials=creds)
-    message = MIMEMultipart()
-    message['To'] = mail_to
-    message['From'] = 'n.s.fukuoka.cp.book@gmail.com'
-    message['Subject'] = title
-    body = MIMEText(mail_text)
-    message.attach(body)
-    for attachment_path in attachment_paths:
-        attachment = MIMEBase('application', 'octet-stream')
-        with open(attachment_path, 'rb') as file:
-            attachment.set_payload(file.read())
-        encoders.encode_base64(attachment)
-        attachment.add_header('Content-Disposition', f'attachment; filename="{os.path.basename(attachment_path)}"')
-        message.attach(attachment)
-    raw = {'raw': message_base64_encode(message)}
-    service.users().messages().send(userId='me', body=raw).execute()
     try:
+        scopes = ['https://mail.google.com/']
+        creds = Credentials.from_authorized_user_file('token.json', scopes)
+        service = build('gmail', 'v1', credentials=creds)
+        message = MIMEMultipart()
+        message['To'] = mail_to
+        message['From'] = 'n.s.fukuoka.cp.book@gmail.com'
+        message['Subject'] = title
+        body = MIMEText(mail_text)
+        message.attach(body)
+        for attachment_path in attachment_paths:
+            attachment = MIMEBase('application', 'octet-stream')
+            with open(attachment_path, 'rb') as file:
+                attachment.set_payload(file.read())
+            encoders.encode_base64(attachment)
+            attachment.add_header('Content-Disposition', f'attachment; filename="{os.path.basename(attachment_path)}"')
+            message.attach(attachment)
+        raw = {'raw': message_base64_encode(message)}
+        service.users().messages().send(userId='me', body=raw).execute()
         insert_log("ファイル付きメールの送信", "1",
                    f"メールアドレス[{mail_to}]に対して[{title}]というファイル付きメールの送信を行いました。送信したファイル一覧はこちらです{attachment_paths}",
                    "mail_post_on_file()",
                    f"{flask.session['userid']}")
-    except:
-        insert_log("ファイル付きメールの送信", "1",
-                   f"メールアドレス[{mail_to}]に対して[{title}]というファイル付きメールの送信を行いました。送信したファイル一覧はこちらです{attachment_paths}",
+    except FileNotFoundError as e:
+        mail_post(mail_text, mail_to, title)
+        insert_log("ファイル付きメールの送信に失敗しました　代替処理を実行し、成功しました。", "2",
+                   f"メールアドレス[{mail_to}]に対してメールの送信を行いました。ファイルの送信には、失敗しました",
+                   "mail_post_on_file()",
+                   f"未ログイン")
+    except Exception as e:
+        insert_log("ファイル付きメールの送信に失敗しました", "1",
+                   f"メールアドレス[{mail_to}]に対して[{title}]というファイル付きメールの送信を試みましたが、失敗しました。送信予定のファイル一覧はこちらです{attachment_paths}",
                    "mail_post_on_file()",
                    f"未ログイン")
 
@@ -2174,94 +2187,6 @@ def error():
     return ERROR(mode)
 
 
-def return_mail_post():
-    conn = sqlite3.connect(DATABASE)
-    cursor = conn.cursor()
-    conn.row_factory = sqlite3.Row
-    import datetime
-    today = datetime.datetime.now().strftime("%Y-%m-%d")
-    sql = "SELECT * FROM send_email WHERE scheduled = ?"
-    params = (today,)
-    cursor.execute(sql, params)
-    result = cursor.fetchall()
-    conn.close()
-    if len(result) == 0:
-        conn = sqlite3.connect(DATABASE)
-        cursor = conn.cursor()
-        conn.row_factory = sqlite3.Row
-        sql = "UPDATE send_email SET execution = TRUE WHERE scheduled = ?"
-        cursor.execute(sql, (today,))
-        conn.commit()
-        conn.close()
-        return
-    elif result[0][2] == 0:
-        conn = sqlite3.connect(DATABASE)
-        cursor = conn.cursor()
-        conn.row_factory = sqlite3.Row
-        import datetime
-        now = datetime.datetime.now()
-        now = now - datetime.timedelta(days=7)
-        date = now.strftime('%Y/%m/%d')
-        sql = "SELECT * FROM rental WHERE rental_date = ? AND rental_status = 1"
-        cursor.execute(sql, (date,))
-        result = cursor.fetchall()
-        ids = []
-        for num in range(len(result)):
-            ids.append(result[num][2])
-        ids = list(set(ids))
-        sql = "SELECT * FROM rental WHERE rental_id = ?"
-        book_sql = "SELECT * FROM book WHERE management_code = ?"
-        for num in range(len(ids)):
-            i = num
-            rental_code = ids[num]
-            cursor.execute(sql, (ids[num],))
-            result = cursor.fetchall()
-            user_sql = "SELECT * FROM users WHERE id = ?"
-            cursor.execute(user_sql, (result[0][3],))
-            user_result = cursor.fetchall()
-            user_mail_address = user_result[0][5]
-            user_name = user_result[0][3]
-            book_list = []
-            title_list = []
-            for num in range(len(result)):
-                cursor.execute(book_sql, (result[num][4],))
-                book_result = cursor.fetchall()
-                book_list.append(result[num][4])
-                title_list.append(book_result[0][4])
-
-            title = "【図書管理システム】本の返却日になりました"
-            mail_text = f"返却期限のお知らせ\n\n" \
-                        f"{user_name}様\n\n" \
-                        "図書管理システムをご利用いただきありがとうございます。\n" \
-                        "お客様のアカウントで貸し出された本の返却日は本日です。\n" \
-                        "返却対象の本は以下の本です。\n\n"
-
-            for num in range(len(book_list)):
-                mail_text = mail_text + f"・{title_list[num]} <{book_list[num]}>\n"
-
-            mail_text = mail_text + "\n返却する際は、返却ページの入力欄に返却IDを入力するか、QRコードを読み込んでください。\n" \
-                                    f"\n返却コード\n《{rental_code}》\n" \
-                                    "返却期日を過ぎている場合、図書委員会からお声がけさせて頂く場合があります。\n\n" \
-                                    "図書管理システムのご利用に際して不明な点やお困りのことがございましたら、\n" \
-                                    "いつでもサポートチームまでお問い合わせください。\n\n" \
-                                    "図書管理システムサポートチーム\nお問合せ先:https://forms.gle/hYsSKbNmjnPbUfyBA"
-
-            file_name = f"img/{rental_code}.png"
-            file_path = [file_name]
-
-            mail_post_on_file(mail_text, user_mail_address, title, file_path)
-
-            conn.commit()
-            conn.close()
-            conn = sqlite3.connect(DATABASE)
-            cursor = conn.cursor()
-            conn.row_factory = sqlite3.Row
-            sql = "UPDATE send_email SET execution = TRUE WHERE scheduled = ?"
-            cursor.execute(sql, (today,))
-            conn.commit()
-            conn.close()
-    else:
-        pass
 
 
 @app.route("/error_setting")
@@ -2279,6 +2204,9 @@ def error_setting():
         cursor.execute(sql)
         result = cursor.fetchall()
         conn.close()
+        insert_log("エラー設定ページにアクセスされました", "1",
+                   f"次のユーザーがエラー設定ページにアクセスしました。", "error_setting()",
+                   f"{flask.session['userid']}")
         return render_template('error_setting.html', page_name="エラー設定--", data=result)
 
 
@@ -2367,10 +2295,11 @@ def SystemUpdate():
 def delete_old_backups(folder_path):
     files = os.listdir(folder_path)
     backup_files = [f for f in files if f.endswith("_backup_data.db") or f.endswith("_backup_data_inventory.db")]
-
     # タイムスタンプを抽出して、ファイルを最新から古い順にソート
     backup_files.sort(key=lambda x: datetime.strptime(x[:19], "%Y-%m-%d_%H-%M-%S"), reverse=True)
-
+    insert_log("外部サポートモードが起動されました", "2",
+               f"次のユーザーが外部サポートモードを起動しました。", "support()",
+               f"System")
     # 最新の5つ以外を削除
     files_to_delete = backup_files[6:]
     for file_to_delete in files_to_delete:
@@ -2380,31 +2309,45 @@ def delete_old_backups(folder_path):
 
 @app.route("/support", methods=['POST'])
 def support():
-    default_section = conf.get_default()
-    try:
-        data = request.get_json()
-        key1_value = data.get('key1', None)
-        default_section.auth_token = key1_value
-        public_url = ngrok.connect(54321)
-        public_url = str(public_url)
-        match = re.search(r'https://[^"]+', public_url)
-        if match:
-            extracted_url = match.group(0)
-            extracted_url_text = f"コネクトに成功しました。現在外部サポートが受けられる状態です。<br>以下のURLをサポート先に公開してください"
-            print(f"抽出されたURL: {extracted_url}")
-        else:
+    if flask.session['access_level'] in [5, 4, 3]:
+        default_section = conf.get_default()
+        try:
+            data = request.get_json()
+            key1_value = data.get('key1', None)
+            default_section.auth_token = key1_value
+            public_url = ngrok.connect(54321)
+            public_url = str(public_url)
+            match = re.search(r'https://[^"]+', public_url)
+            if match:
+                insert_log("外部サポートモードが起動されました", "2",
+                           f"次のユーザーが外部サポートモードを起動しました。", "support()",
+                           f"{flask.session['userid']}")
+                app.config['SUPPORT_CHINESE'] = True
+                extracted_url = match.group(0)
+                extracted_url_text = f"コネクトに成功しました。現在外部サポートが受けられる状態です。<br>以下のURLをサポート先に公開してください"
+                print(f"抽出されたURL: {extracted_url}")
+                app.config['SUPPORT_URL'] = extracted_url
+            else:
+                extracted_url = "/"
+                extracted_url_text = "コネクトに失敗しました。しばらく時間をおいてお試しください"
+        except:
             extracted_url = "/"
             extracted_url_text = "コネクトに失敗しました。しばらく時間をおいてお試しください"
-    except:
-        extracted_url = "/"
-        extracted_url_text = "コネクトに失敗しました。しばらく時間をおいてお試しください"
-    return jsonify(
-        f"<p style='text-align:center;'>{extracted_url_text}<br><a href='{extracted_url}'>{extracted_url}</a></p>")
+        return jsonify(
+            f"<p style='text-align:center;'>{extracted_url_text}<br><a href='{extracted_url}'>{extracted_url}</a></p>")
+    else:
+        return ERROR(14)
+
+
 
 
 @app.route("/support_end")
 def kill():
+    app.config['SUPPORT_CHINESE'] = False
     ngrok.kill()
+    insert_log("外部サポートモードを終了しました", "2",
+               f"外部サポートモードを終了しました。", "kill()",
+               f"System")
     return "<h1>Disconnected</h1><a href='/'>戻る</a>"
 
 

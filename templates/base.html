@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
@@ -58,17 +58,25 @@
     <span class="bk_img" onclick="bk_img_set(4)" onmouseover="test_bk_img(4)" onmouseout="end_test()"></span>
     <span class="bk_img" onclick="bk_img_set(5)" onmouseover="test_bk_img(5)" onmouseout="end_test()"></span>
 </div>
-<div class="button-container" id="button-container" style="text-align: center;border: #d74f4f 2px solid;padding: 1rem">
+<div class="button-container" id="button-container" style="text-align: center;border: #d74f4f 2px solid;padding: 1rem;display: none">
     <button onclick="end_support()" class="round-button" id="round-button" style="text-align: center">&#10006;</button>
-    <p>現在、外部サポートを受信しています。<br>中断するには、バツボタンを押してください</p>
+    <p>現在、外部サポートを受信しています。<br>中断するには、バツボタンを押してください</p><br><button id="copy-button" onclick="copy()">URLをコピーする</button>
 </div>
 <style>
+    #copy-button{
+        width: 60%;
+        height: 3em;
+        color: #0a0a0a;
+        border-radius: 1em;
+        background-color: #d9edff;
+    }
     /* ページ全体を覆うコンテナ */
     .button-container {
         position: fixed;
         top: 10px; /* トップからの距離 */
         right: 10px; /* 右からの距離 */
         z-index: 999; /* 最前面に表示するためのz-index */
+        background-color: rgba(10, 10, 10, 0.8);
     }
 
     /* 円形のボタン */
@@ -305,14 +313,56 @@
 
 
 </style>
-<script>
-    var currentDomain = window.location.hostname;
 
-    // ドメインが.appで終わる場合にアラートを表示
-    if (currentDomain.endsWith(".app")) {
-        document.getElementById("button-container").style.display = "block"
-    } else {
-        document.getElementById("button-container").style.display = "none"
+<script>
+    fetch('/api/support_chinese')
+        .then(response => response.json())
+        .then(data => {
+            var supportChinese = data.support_chinese;
+            var supportUrl = data.support_url;
+            if (supportChinese) {
+                document.getElementById("button-container").style.display = "block";
+            } else {
+                document.getElementById("button-container").style.display = "none";
+            }
+            URL_COPY = supportUrl
+
+            console.log('Support Chinese:', supportChinese);
+        })
+        .catch(error => console.error('Error:', error));
+
+    function copy() {
+        copyTextToClipboard(URL_COPY)
+    }
+
+    function copyTextToClipboard(text) {
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text)
+                .then(() => {
+                    console.log('Text copied to clipboard:', text);
+                })
+                .catch(err => {
+                    console.error('Unable to copy to clipboard', err);
+                });
+        } else {
+            fallbackCopyTextToClipboard(text);
+        }
+    }
+
+    function fallbackCopyTextToClipboard(text) {
+        var textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+
+        try {
+            document.execCommand('copy');
+            console.log('Text copied to clipboard:', text);
+        } catch (err) {
+            console.error('Unable to copy to clipboard', err);
+        } finally {
+            document.body.removeChild(textArea);
+        }
     }
 
     function end_support() {
