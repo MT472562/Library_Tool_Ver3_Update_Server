@@ -1,5 +1,5 @@
 import sqlite3
-
+import base64
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
@@ -113,7 +113,7 @@ def delayed_return():
     overdue_list = []
     for row in values:
         try:
-            overdue_list.append(row[0])
+            overdue_list.append(base64.b64decode(row[0].encode()).decode())
         except:
             pass
 
@@ -186,8 +186,8 @@ def delayed_return():
                 title_list.append(book_result[0][4])
                 real_list.append(book_result[0][5])
                 conn.close()
-
-            mail_stop_url = f"https://docs.google.com/forms/d/e/1FAIpQLSc5-b6rlD7VrHrU8pPmz3BktDcw_WtFMlgimn5bX4rRAOYgGA/viewform?usp=pp_url&entry.866679447={rental_code}"
+            encoded_rental_code = base64.b64encode(rental_code.encode()).decode()
+            mail_stop_url = f"https://docs.google.com/forms/d/e/1FAIpQLSc5-b6rlD7VrHrU8pPmz3BktDcw_WtFMlgimn5bX4rRAOYgGA/viewform?usp=pp_url&entry.866679447={encoded_rental_code}"
             title = "【重要】【図書管理システム】本の返却日が過ぎています"
             mail_text = f"返却期限超過のお知らせ\n\n" \
                         f"{user_name}様\n\n" \
