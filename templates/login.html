@@ -31,7 +31,7 @@
         }
 
     }
-    function login() {
+    async function login() {
         const user_id = document.getElementById("user_id").value;
         const user_password = document.getElementById("user_password").value;
         if (user_id == "" && user_password == "") {
@@ -47,8 +47,8 @@
         let user_password_hash = CryptoJS.SHA512(user_password).toString();
         let login_point = "/login";
         let login_data = {
-            "userid": user_id,
-            "password": user_password_hash,
+            "userid": await Encrypt(user_id),
+            "password": await Encrypt(user_password_hash),
             "redirect": "/account"
         };
 

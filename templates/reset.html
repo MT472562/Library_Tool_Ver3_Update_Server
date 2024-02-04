@@ -73,7 +73,7 @@ background-color: #ff9327;width: 10%;font-size: 1.3rem;height: 2.5rem;color: #FF
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    mailaddress: input_email_address
+                    mailaddress: await Encrypt(input_email_address)
                 })
             });
 
@@ -106,8 +106,8 @@ background-color: #ff9327;width: 10%;font-size: 1.3rem;height: 2.5rem;color: #FF
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    mailaddress: mailaddress,
-                    userid: userid
+                    mailaddress: await Encrypt(mailaddress),
+                    userid: await Encrypt(userid)
                 })
             });
 

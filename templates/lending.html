@@ -37,7 +37,7 @@
     </div>
 </div>
 <button onclick="QR_Reader()" id="Reader_start_button">読み取り開始</button>
-
+<button onclick="https_page()" id="https_page" style="display:none;">カメラ読込みできるページに移動</button>
 <script>
     function hasDuplicateBookCode(dataList, value) {
         for (var i = 0; i < dataList.length; i++) {
@@ -49,6 +49,18 @@
     }
     if (location.protocol == 'http:') {
         document.getElementById("Reader_start_button").style.display="none";
+        document.getElementById("https_page").style.display = "block"
+    }
+
+    function https_page() {
+        var dialogHTML = '<div class="dialog-box">';
+        dialogHTML += '<p>SSL/TLSページに移動しますが、自己証明書のため、ブラウザから警告がされる場合があります。<br>以下の画像に従って、警告を解除してください<br>セキュリティー上の問題はありませんので、ご安心ください。</p>';
+        dialogHTML += '<img src="resources/https_page.png" style="width: 100%">';
+        dialogHTML +='<button onclick="pege_out()"style="width: 6rem;height: 2rem;background-color: #0eacff">移動する</button>';
+        top_alert("通知",dialogHTML,50000)
+    }
+    function pege_out(){
+        window.location.href = "https://" + window.location.host + window.location.pathname;
     }
     function END_QR_Reader() {
         document.getElementById("overlay-camera").style.display = "none";

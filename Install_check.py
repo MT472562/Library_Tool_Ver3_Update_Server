@@ -38,7 +38,7 @@ def main():
         total_check.append(["file_check_and_create_list", num, res])
 
     file_check_list = ["main.py", "database.db", "inventoryDatabase.db", "token.json", "Maintenance.py","update_module.py",
-                       "client_secret.json"]
+                       "client_secret.json","gas_token.json","return.py","digest.json"]
     for num in file_check_list:
         res = file_check(num)
         total_check.append(["file_check_list", num, res])

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja" xmlns="http://www.w3.org/1999/html" xmlns="http://www.w3.org/1999/html">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         var fadeElement = document.querySelector(".fade-in-element");
@@ -149,11 +150,11 @@
 
     var bk_img_list = [
         "background-color: #15202B",
-        "background-image: linear-gradient(135deg, #a560ce 0%, #c459a1 100%)",
-        "background-image: linear-gradient(-225deg, #65379B 0%, #745bc7 53%, #6457C6 100%)",
-        "background-image: linear-gradient(-225deg, #ab0454 0%, #8D0B93 50%, #321575 100%)",
-        "background-image: linear-gradient(-225deg, #473B7B 0%, #3584A7 51%, #29b4a3 100%)",
-        "background-image: linear-gradient(-20deg, #c94c5d 0%, #cc7c37 100%)"
+        "background-image: linear-gradient(-235deg, #a560ce 0%, #c459a1 100%)",
+        "background-image: linear-gradient(-225deg, #65379B 0%,#6457C6 100%)",
+        "background-image: linear-gradient(-225deg, #ab0454 0%,#321575 100%)",
+        "background-image: linear-gradient(-225deg, #473B7B 0%, #29b4a3 100%)",
+        "background-image: linear-gradient(-234deg, #c94c5d 0%, #cc7c37 100%)"
     ];
 
     function bk_img_set(num) {
@@ -304,7 +305,7 @@
     /* styles.css */
     .fade-in-element {
         opacity: 0; /* 初期状態で非表示 */
-        transition: opacity 1s ease; /* opacityプロパティをアニメーション化 */
+        transition: opacity 1.5s ease; /* opacityプロパティをアニメーション化 */
     }
 
     .fade-in-element.fade-in {
@@ -374,6 +375,71 @@
             alert("切断処理を中止しました")
         }
     }
+</script>
+<script>
+    //AES encryption process: Never touch it
+    async function Encrypt(data) {
+        try {
+            var response = await fetch('/retrieve_aes_key_endpoint', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({"request_code": "QUVT44Kt44O844KS5Y+W5b6X"})
+            });
+            var responseData = await response.json();
+            const key = CryptoJS.enc.Base64.parse(responseData['aes_key']);
+            const iv = CryptoJS.enc.Base64.parse(responseData['aes_iv']);
+
+            const ciphertext = CryptoJS.AES.encrypt(data, key, {
+                iv: iv,
+                mode: CryptoJS.mode.CBC,
+                padding: CryptoJS.pad.Pkcs7
+            });
+            return ciphertext.toString()
+        } catch (error) {
+            console.error('Error:', error);
+            throw error;
+        }
+    }
+
+
+    async function Decryption(data) {
+        try {
+            var response = await fetch('/retrieve_aes_key_endpoint', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({"request_code": "QUVT44Kt44O844KS5Y+W5b6X"})
+            });
+            var responseData = await response.json();
+            const key = CryptoJS.enc.Base64.parse(responseData['aes_key']);
+            const iv = CryptoJS.enc.Base64.parse(responseData['aes_iv']);
+            const decrypted = CryptoJS.AES.decrypt(data, key, {
+                iv: iv,
+                mode: CryptoJS.mode.CBC,
+                padding: CryptoJS.pad.Pkcs7
+            });
+            const plaintext = decrypted.toString(CryptoJS.enc.Utf8);
+            return plaintext
+        } catch (error) {
+            console.error('Error:', error);
+            throw error;
+        }
+    }
+
+</script>
+<script>
+    async function Encrypt_Data() {
+        var data = await Encrypt("HelloWorld");
+        console.log(data);
+        var data = await Decryption(data)
+        console.log(data);
+
+    }
+    // Encrypt_Data()
+
 </script>
 {% block body %}
 {% endblock %}

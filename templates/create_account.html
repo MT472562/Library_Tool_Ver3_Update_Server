@@ -303,7 +303,8 @@
         let certification_id = document.getElementById("certification_id").value;
         let certification_pw = document.getElementById("certification_pw").value;
         let axesslevel = document.getElementById("axesslevel").value;
-        const password_hash = CryptoJS.SHA512(password).toString();
+        var password_hash = CryptoJS.SHA512(password).toString();
+        var password_hash = await Encrypt(password_hash);
         const certification_pw_hash = CryptoJS.SHA512(certification_pw).toString();
 
         if (email_st && password1_st && userid_st && username_st && axesslevel_st && certification_id_st && certification_pw_st) {
@@ -319,8 +320,8 @@
                         },
                         body: JSON.stringify({
                             email: mailaddress,
-                            certification_id: certification_id,
-                            certification_pw_hash: certification_pw_hash,
+                            certification_id: await Encrypt(certification_id),
+                            certification_pw_hash: await Encrypt(certification_pw_hash),
                             axesslevel: axesslevel,
                             username: username
                         })

@@ -150,8 +150,8 @@
                 data = {
                     "after_data": after_data,
                     "val": gb_val,
-                    "userid": userId,
-                    "password": password,
+                    "userid": await Encrypt(userId),
+                    "password": await Encrypt(password),
                     "new_mail": "",
                 };
                 try {
@@ -218,7 +218,7 @@
             });
         } else {
             data = {
-                "after_data": after_data,
+                "after_data": await Encrypt(after_data),
                 "val": gb_val,
                 "userid": "",
                 "password": "",

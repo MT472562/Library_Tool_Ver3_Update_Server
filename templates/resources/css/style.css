@@ -1633,6 +1633,22 @@ input {
         transform: translate(-50%, -50%);
     }
 
+#https_page {
+    width: 10em;
+    height: 4rem;
+    font-size: 1.1rem;
+    border: none;
+    border-radius: 5px;
+    margin: 0.5rem;
+    position: absolute;
+    top: 10%;
+    left: 90%;
+    transform: translate(-50%, -50%);
+    background-color: #3d92cc;
+    box-shadow: 0 0 15px 0 rgba(0, 119, 255, 0.61);
+    color: #d9d9d9;
+}
+
     #Reader_start_button {
         background-color: #4db2ff;
         box-shadow: 0 0 15px 0 rgba(0, 119, 255, 0.61);

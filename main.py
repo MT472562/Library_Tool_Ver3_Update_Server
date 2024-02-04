@@ -19,6 +19,10 @@ from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives import padding
+from cryptography.hazmat.backends import default_backend
 import arrow
 import flask
 import qrcode
@@ -32,6 +36,11 @@ from pyngrok import ngrok, conf
 import Maintenance
 import update_module
 from ics import Calendar, Event
+
+# from cryptography.hazmat.primitives.asymmetric import padding
+# from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+# from cryptography.hazmat.primitives import padding
+# from cryptography.hazmat.backends import default_backend
 
 today = datetime.now()
 logging.basicConfig(filename=f'logs/{today.strftime("%Y-%m-%d")}.log', level=logging.DEBUG,
@@ -74,6 +83,14 @@ app.config['SUPPORT_CHINESE'] = False
 app.config['SUPPORT_URL'] = ""
 
 
+def generate_AES_key():
+    key = os.urandom(32)
+    iv = os.urandom(16)
+    return key, iv
+
+
+app.config["AES_KEY"], app.config["AES_IV"] = generate_AES_key()
+print(app.config["AES_KEY"], app.config["AES_IV"])
 @app.route('/api/support_chinese', methods=['GET'])
 def get_support_chinese():
     return jsonify(support_chinese=app.config['SUPPORT_CHINESE'], support_url=app.config['SUPPORT_URL'])
@@ -340,6 +357,8 @@ def login():
     login_data = request.get_json()
     userid = login_data['userid']
     password = login_data['password']
+    userid=Decryption(app.config["AES_KEY"],app.config["AES_IV"],userid)
+    password = Decryption(app.config["AES_KEY"],app.config["AES_IV"],password)
     redirect_url = login_data['redirect']
     conn = sqlite3.connect(DATABASE, detect_types=sqlite3.PARSE_DECLTYPES)
     conn.row_factory = sqlite3.Row
@@ -467,34 +486,34 @@ def account_edit_post():
     val_list = ["username", "userid", "mail", "password", "access_level"]
     type = data['val']
     if type in ["0", 0]:
-        if data["after_data"] == "":
+        if Decryption(app.config["AES_KEY"],app.config["AES_IV"],data["after_data"]) == "":
             res = {"msg": "空白のユーザー名は使用できません。", "st": "False"}
             return jsonify(res_data=res)
         val = val_list[0]
         sql = "UPDATE users SET username = ? WHERE userid = ?"
-        prams = (data["after_data"], flask.session["userid"])
+        prams = (Decryption(app.config["AES_KEY"],app.config["AES_IV"],data["after_data"]), flask.session["userid"])
         edit_account_set_data(sql, prams)
-        flask.session['username'] = data["after_data"]
+        flask.session['username'] = Decryption(app.config["AES_KEY"],app.config["AES_IV"],data["after_data"])
     elif type in ["1", 1]:
-        if data["after_data"] == "":
+        if Decryption(app.config["AES_KEY"],app.config["AES_IV"],data["after_data"]) == "":
             res = {"msg": "空白のユーザーIDは使用できません。", "st": "False"}
             return jsonify(res_data=res)
         val = val_list[1]
         conn = sqlite3.connect(DATABASE)
         c = conn.cursor()
-        c.execute("SELECT * FROM users WHERE userid = ?", (data["after_data"],))
+        c.execute("SELECT * FROM users WHERE userid = ?", (Decryption(app.config["AES_KEY"],app.config["AES_IV"],data["after_data"]),))
         db_userid_ck = c.fetchone()
         conn.close()
-        result = contains_special_characters(data["after_data"])
-        result2 = contains_fullwidth_characters(data["after_data"])
+        result = contains_special_characters(Decryption(app.config["AES_KEY"],app.config["AES_IV"],data["after_data"]))
+        result2 = contains_fullwidth_characters(Decryption(app.config["AES_KEY"],app.config["AES_IV"],data["after_data"]))
         if result and result2:
             res = {"msg": "ユーザーIDには半角英数字のみ使用できます。", "st": "False"}
             return jsonify(res_data=res)
         if db_userid_ck is None:
             sql = "UPDATE users SET userid = ? WHERE userid = ?"
-            prams = (data["after_data"], flask.session["userid"])
+            prams = (Decryption(app.config["AES_KEY"],app.config["AES_IV"],data["after_data"]), flask.session["userid"])
             edit_account_set_data(sql, prams)
-            flask.session['userid'] = data["after_data"]
+            flask.session['userid'] = Decryption(app.config["AES_KEY"],app.config["AES_IV"],data["after_data"])
         else:
             res = {"msg": "そのユーザーIDは既に使用されています。\n別のユーザーIDを使用してください", "st": "False"}
             return jsonify(res_data=res)
@@ -511,7 +530,7 @@ def account_edit_post():
         if data["after_data"] == "":
             res = {"msg": "空白のパスワードは使用できません。", "st": "False"}
             return jsonify(res_data=res)
-        password = hashlib.sha512(data["after_data"].encode()).hexdigest()
+        password = hashlib.sha512(Decryption(app.config["AES_KEY"],app.config["AES_IV"],data["after_data"]).encode()).hexdigest()
         salt = generate_salt(16)
         new_password = str(password) + str(salt)
         password_hash = hashlib.sha512(new_password.encode()).hexdigest()
@@ -533,13 +552,13 @@ def account_edit_post():
             conn = sqlite3.connect(DATABASE)
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
-            c.execute("SELECT * FROM users WHERE userid = ?", (data["userid"],))
+            c.execute("SELECT * FROM users WHERE userid = ?", (Decryption(app.config["AES_KEY"],app.config["AES_IV"],data["userid"]),))
             db_data = c.fetchone()
-            password_hash = hashlib.sha512(data["password"].encode()).hexdigest()
+            password_hash = hashlib.sha512(Decryption(app.config["AES_KEY"],app.config["AES_IV"],data["password"]).encode()).hexdigest()
             salt = db_data["salt"]
             password_hash = str(password_hash) + str(salt)
             password_hash = hashlib.sha512(password_hash.encode()).hexdigest()
-            c.execute("SELECT * FROM users WHERE userid = ? AND password = ?", (data["userid"], password_hash,))
+            c.execute("SELECT * FROM users WHERE userid = ? AND password = ?", (Decryption(app.config["AES_KEY"],app.config["AES_IV"],data["userid"]), password_hash,))
             db_userid = c.fetchone()
             conn.close()
             if db_userid is None:
@@ -621,6 +640,7 @@ def reset_account():
 def accout_id_check():
     res = request.get_json()
     email = res['mailaddress']
+    email =Decryption(app.config["AES_KEY"],app.config["AES_IV"],email)
     conn = sqlite3.connect(DATABASE)
     c = conn.cursor()
 
@@ -656,6 +676,8 @@ def reset_account_check():
     res = request.get_json()
     email = res['mailaddress']
     userid = res['userid']
+    email = Decryption(app.config["AES_KEY"],app.config["AES_IV"],email)
+    userid = Decryption(app.config["AES_KEY"],app.config["AES_IV"],userid)
     if email and userid:
         conn = sqlite3.connect(DATABASE)
         conn.row_factory = sqlite3.Row
@@ -756,7 +778,8 @@ def reset_password_post():
     rq = request.get_json()
     token = rq["token"]
     new_password = rq["password"]
-
+    token=Decryption(app.config["AES_KEY"],app.config["AES_IV"],token)
+    new_password=Decryption(app.config["AES_KEY"],app.config["AES_IV"],new_password)
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
@@ -774,6 +797,7 @@ def reset_password_post():
         return redirect(ERROR(6))
     else:
         user_id = result["userid"]
+        # user_id
         salt = generate_salt(16)
         new_password = str(new_password) + str(salt)
         new_password = hashlib.sha512(new_password.encode()).hexdigest()
@@ -850,6 +874,8 @@ def check_email_and_certification():
     rq = request.get_json()
     certification_id = rq["certification_id"]
     certification_pw_hash = rq["certification_pw_hash"]
+    certification_id=Decryption(app.config["AES_KEY"], app.config["AES_IV"],certification_id)
+    certification_pw_hash=Decryption(app.config["AES_KEY"], app.config["AES_IV"],certification_pw_hash)
     axesslevel = rq["axesslevel"]
     if axesslevel in ["3", "4", "5"]:
         conn = sqlite3.connect(DATABASE)
@@ -919,6 +945,7 @@ def create_account_data_post():
     res = request.get_json()
     mailaddress = res['mailaddress']
     password_hash = res['password_hash']
+    password_hash = Decryption(app.config["AES_KEY"], app.config["AES_IV"],password_hash)
     userid = res['userid']
     username = res['username']
     axesslevel = res['axesslevel']
@@ -2315,7 +2342,8 @@ def support():
             data = request.get_json()
             key1_value = data.get('key1', None)
             default_section.auth_token = key1_value
-            public_url = ngrok.connect(54321)
+            public_url = ngrok.connect(80)
+            #nginx用の公開ポート
             public_url = str(public_url)
             match = re.search(r'https://[^"]+', public_url)
             if match:
@@ -2362,6 +2390,43 @@ def delete_backup():
         Maintenance.backup()
         delete_old_backups("backup")
         return redirect("/setting")
+
+
+@app.route('/retrieve_aes_key_endpoint', methods=["POST"])
+def get_key():
+    aes_key = request.data
+    json_string = aes_key.decode('utf-8')
+    data = json.loads(json_string)
+    request_code = data["request_code"]
+    if request_code == "QUVT44Kt44O844KS5Y+W5b6X":
+        key = app.config["AES_KEY"]
+        iv = app.config["AES_IV"]
+        encoded_aes_key = base64.b64encode(key).decode('utf-8')
+        encrypted_aes_iv = base64.b64encode(iv).decode('utf-8')
+        return jsonify({'aes_key': encoded_aes_key, 'aes_iv': encrypted_aes_iv})
+    else:
+        return jsonify(None)
+
+
+def Encrypt(aes_key, aes_iv, encrypt_text):
+    padder = padding.PKCS7(algorithms.AES.block_size).padder()
+    padded_data = padder.update(encrypt_text.encode()) + padder.finalize()
+    cipher = Cipher(algorithms.AES(aes_key), modes.CBC(aes_iv), backend=default_backend())
+    encryptor = cipher.encryptor()
+    ciphertext = encryptor.update(padded_data) + encryptor.finalize()
+    return ciphertext
+
+
+def Decryption(aes_key, aes_iv, decrypt_text):
+    decrypt_text=base64.b64decode(decrypt_text)
+    cipher = Cipher(algorithms.AES(aes_key), modes.CBC(aes_iv), backend=default_backend())
+    decryptor = cipher.decryptor()
+    padded_data = decryptor.update(decrypt_text) + decryptor.finalize()
+    unpadder = padding.PKCS7(algorithms.AES.block_size).unpadder()
+    plaintext = unpadder.update(padded_data) + unpadder.finalize()
+    return plaintext.decode()
+
+
 
 
 if __name__ == '__main__':
