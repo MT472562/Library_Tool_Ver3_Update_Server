@@ -139,31 +139,45 @@
 
     async function get_data() {
         var after_data = document.getElementById("after_input").value;
+        if (gb_val == 4 || gb_val == "4") {
+            if (after_data == "3" || after_data == "4" || after_data == "5") {
+                top_alert("情報", "認証が必要なアクセスレベルを変更しようとしています。\n利用可能なアカウントを入力してください", 5000);
+                document.getElementById("edit_input_data").style.display = "none";
+                document.getElementById("ck_axess_userid_password").style.display = "block";
 
-        if ((gb_val == 4 || gb_val == "4") && (after_data == "3" || after_data == "4" || after_data == "5")) {
-            top_alert("情報", "認証が必要なアクセスレベルを変更しようとしています。\n利用可能なアカウントを入力してください", 5000);
-            document.getElementById("edit_input_data").style.display = "none";
-            document.getElementById("ck_axess_userid_password").style.display = "block";
-            document.getElementById("ck_post").onclick = async function () {
-                var userId = document.getElementById("ck_userid").value;
-                var password = document.getElementById("ck_password").value;
+                document.getElementById("ck_post").onclick = async function () {
+                    var userId = document.getElementById("ck_userid").value;
+                    var password = document.getElementById("ck_password").value;
+                    data = {
+                        "after_data": after_data,
+                        "val": gb_val,
+                        "userid": await Encrypt(userId),
+                        "password": await Encrypt(password),
+                        "new_mail": "",
+                    };
+                    try {
+                        var result = await post_data(data);
+
+                        // post_data の処理が完了した後に行いたい処理
+                        // ...
+                    } catch (error) {
+                        console.error(error);
+                    }
+                };
+            } else {
                 data = {
                     "after_data": after_data,
                     "val": gb_val,
-                    "userid": await Encrypt(userId),
-                    "password": await Encrypt(password),
+                    "userid": "",
+                    "password": "",
                     "new_mail": "",
                 };
                 try {
                     var result = await post_data(data);
-                    (result);
-
-                    // post_data の処理が完了した後に行いたい処理
-                    // ...
                 } catch (error) {
                     console.error(error);
                 }
-            };
+            }
         } else if (gb_val == 2 || gb_val == "2") {
             if (document.getElementById("after_input").value == "") {
                 return top_alert("エラーが発生しました。", "メールアドレスが空白のため、使用できません。")
@@ -205,9 +219,6 @@
                     };
                     try {
                         var result = await post_data(data);
-
-                        // post_data の処理が完了した後に行いたい処理
-                        // ...
                     } catch (error) {
                         console.error(error);
                     }

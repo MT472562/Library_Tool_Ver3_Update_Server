@@ -2,7 +2,7 @@ import sqlite3
 import base64
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
-
+import qrcode
 from main import mail_post_on_file
 
 DATABASE = "database.db"
@@ -91,6 +91,17 @@ def return_mail_post_today():
                                     "図書管理システムのご利用に際して不明な点やお困りのことがございましたら、\n" \
                                     "いつでもサポートチームまでお問い合わせください。\n\n" \
                                     "図書管理システムサポートチーム\nお問合せ先:https://forms.gle/hYsSKbNmjnPbUfyBA"
+            qr = qrcode.QRCode(
+                version=1,  # QRコードのバージョン
+                error_correction=qrcode.constants.ERROR_CORRECT_L,  # 誤り訂正レベル
+                box_size=10,  # ボックスのサイズ
+                border=4,  # 境界のサイズ
+            )
+            qr.add_data(rental_code)
+            qr.make(fit=True)
+            img = qr.make_image(fill_color="black", back_color="white")
+            q_filename = f"img/{rental_code}.png"
+            img.save(q_filename)
 
             file_name = f"img/{rental_code}.png"
             file_path = [file_name]
@@ -116,7 +127,7 @@ def delayed_return():
             overdue_list.append(base64.b64decode(row[0].encode()).decode())
         except:
             pass
-
+    print("除外データ",overdue_list)
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
     conn.row_factory = sqlite3.Row
@@ -153,7 +164,7 @@ def delayed_return():
         for num in range(len(result)):
             ids.append(result[num][2])
         ids = list(set(ids))
-        print(ids)
+        print("返却期限超過",ids)
         for num in range(len(ids)):
             rental_code = ids[num]
             conn = sqlite3.connect(DATABASE)
@@ -202,12 +213,22 @@ def delayed_return():
             mail_text = (mail_text + "\n返却する際は、返却ページの入力欄に返却IDを入力するか、QRコードを読み込んでください。\n" \
                                      f"\n返却コード\n《{rental_code}》\n" \
                                      "今後も返却期日を過ぎている場合、図書委員会からお声がけさせて頂く場合がありますので了承ください。\n\n"
-                                     f"延滞メールは返却されるまで、毎日送信されます。\n"\
+                                     f"延滞メールは本が返却されるまで、毎日送信されます。\n"\
                                      f"延滞メールはこちらから停止できますが、速やかに返却をするようにしてください。{mail_stop_url}\n\n" \
                                      "図書管理システムのご利用に際して不明な点やお困りのことがございましたら、\n" \
                                      "いつでもサポートチームまでお問い合わせください。\n\n" \
                                      "図書管理システムサポートチーム\nお問合せ先:https://forms.gle/hYsSKbNmjnPbUfyBA")
-
+            qr = qrcode.QRCode(
+                version=1,  # QRコードのバージョン
+                error_correction=qrcode.constants.ERROR_CORRECT_L,  # 誤り訂正レベル
+                box_size=10,  # ボックスのサイズ
+                border=4,  # 境界のサイズ
+            )
+            qr.add_data(rental_code)
+            qr.make(fit=True)
+            img = qr.make_image(fill_color="black", back_color="white")
+            q_filename = f"img/{rental_code}.png"
+            img.save(q_filename)
             file_name = f"img/{rental_code}.png"
             file_path = [file_name]
             if rental_code not in overdue_list:

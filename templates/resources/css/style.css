@@ -586,6 +586,7 @@ footer a {
 
 #account_button_div a {
     text-decoration: none;
+    text-align: center;
 }
 #create_account {
     width: 35%;

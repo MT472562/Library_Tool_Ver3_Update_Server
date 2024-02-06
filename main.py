@@ -1,4 +1,3 @@
-# ライブラリ読み込み
 import base64
 import binascii
 import hashlib
@@ -18,7 +17,6 @@ from email import encoders
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding
@@ -57,14 +55,12 @@ for file in files:
         os.remove(f"logs/{file}")
     else:
         pass
-# ログメッセージの出力例の提示
 logging.debug('This is a debug message')
 logging.info('This is an info message')
 logging.warning('This is a warning message')
 logging.error('This is an error message')
 logging.critical('This is a critical message')
 
-# Flaskの設定
 app = flask.Flask(__name__, static_folder='./templates/resources')
 app.config['SECRET_KEY'] = secrets.token_urlsafe(128)
 app.config['SESSION_TYPE'] = 'filesystem'
@@ -81,33 +77,22 @@ users = {
 }
 app.config['SUPPORT_CHINESE'] = False
 app.config['SUPPORT_URL'] = ""
-
-
 def generate_AES_key():
     key = os.urandom(32)
     iv = os.urandom(16)
     return key, iv
-
-
 app.config["AES_KEY"], app.config["AES_IV"] = generate_AES_key()
-print(app.config["AES_KEY"], app.config["AES_IV"])
 @app.route('/api/support_chinese', methods=['GET'])
 def get_support_chinese():
     return jsonify(support_chinese=app.config['SUPPORT_CHINESE'], support_url=app.config['SUPPORT_URL'])
-
 @auth.get_password
 def get_pw(username):
     if username in users:
         return users.get(username)
     return None
-
-
 @app.route("/test")
 def test():
     return render_template("code.html")
-
-
-# 引数で入力されたファイルを削除する関数
 def delete_file(file_path):
     try:
         if os.path.exists(file_path):
@@ -121,8 +106,6 @@ def delete_file(file_path):
         insert_log("ファイルの削除に失敗しました", "2",
                    f"システム処理で次のファイルの削除に失敗しました。。\n{file_path}\n{e}", "delete_file()",
                    "System")
-
-
 @app.route("/MaintenanceRun", methods=['POST'])
 @auth.login_required
 def MaintenanceRun():
@@ -136,16 +119,11 @@ def MaintenanceRun():
 
     else:
         return ERROR(16)
-
-
 @app.route("/install_setup_python_on_run")
 def install_setup_python_on_run():
     import Install_check
     Install_check.main()
     return redirect("/")
-
-
-# System用のログを保存する関数
 def insert_log(type, level, msg, function, user):
 
     try:
@@ -163,24 +141,13 @@ def insert_log(type, level, msg, function, user):
                   (type, date, function, level, msg, "System"))
     finally:
         conn.close()
-
-
-# ランダム英数字を引数で入力された桁数作成
 def generate_random_string(length):
     letters = string.ascii_lowercase
     result_str = ''.join(random.choice(letters) for i in range(length))
     return result_str
-
-
 param_query_global = generate_random_string(5)
-
-
-# 入力された文字列をbase64の形式に変換し返却する関数
 def message_base64_encode(message):
     return base64.urlsafe_b64encode(message.as_bytes()).decode()
-
-
-# 文字列のみのメールを送信する関数
 def mail_post(mail_text, mail_to, title):
     scopes = ['https://mail.google.com/']
     creds = Credentials.from_authorized_user_file('token.json', scopes)
@@ -202,9 +169,6 @@ def mail_post(mail_text, mail_to, title):
         insert_log("メールの送信", "1",
                    f"メールアドレス[{mail_to}]に対して[{title}]というメールの送信を行いました。", "mail_post()",
                    f"未ログイン")
-
-
-# 引数で入力されたリストのpathをメールに添付して送信する関数
 def mail_post_on_file(mail_text, mail_to, title, attachment_paths):
     try:
         scopes = ['https://mail.google.com/']
@@ -241,8 +205,6 @@ def mail_post_on_file(mail_text, mail_to, title, attachment_paths):
                    "mail_post_on_file()",
                    f"未ログイン")
 
-
-# 引数で入力された数値をErrorTableからErrorIDを元にエラーページにリダイレクトする
 def ERROR(error_db_id):
     con = sqlite3.connect(DATABASE)
     error_db = con.execute(
@@ -257,17 +219,12 @@ def ERROR(error_db_id):
     return render_template("axesserror.html",
                            msg=msg,
                            errorid=errorid)
-
-
 # BookTableの一覧を返却する関数
 def book_database():
     con = sqlite3.connect(DATABASE)
     db_book = con.execute("SELECT * FROM book").fetchall()
     con.close()
     return db_book
-
-
-# .icsファイルを生成してidを返却する関数
 def Create_Calendar(START_DATE, END_DATE, EVENT_NAME, EVENT_LOCATION, EVENT_DESCRIPTION, file_id):
     cal = Calendar()
     event = Event()
@@ -280,9 +237,6 @@ def Create_Calendar(START_DATE, END_DATE, EVENT_NAME, EVENT_LOCATION, EVENT_DESC
     with open(file_id, "w") as file:
         file.writelines(cal)
     return file_id
-
-
-# ユーザーIDとpoint数(-を含む)でオペレーションする関数
 def point_operation(user_id, point_, operation):
     if flask.session["point"] == None:
         con = sqlite3.connect(DATABASE)
@@ -303,15 +257,12 @@ def point_operation(user_id, point_, operation):
         pass
     con.commit()
     con.close()
-
-
 @app.route("/")
 def index():
     if 'userid' in flask.session:
         st = {"st": "True"}
     else:
         st = {"st": "False"}
-
     db_book = book_database()
     i = 1
     img_url = []
@@ -323,7 +274,6 @@ def index():
         codes.append(code)
         link = "https://www.google.com/search?q=" + db_book[-i][1]
         links.append(link)
-
         i = i + 1
         img_url.append(url)
     return render_template('index.html',
@@ -332,13 +282,9 @@ def index():
                            st=st,
                            codes=codes,
                            page_name="トップページ--")
-
-
 @app.route("/cat")
 def cat():
     return render_template("cat.html")
-
-
 @app.route("/account")
 def account():
     msg = request.args.get('msg')
@@ -350,8 +296,6 @@ def account():
                                operation=msg, redirect_url=re_url)
     else:
         return render_template('login.html', page_name="ログインページ--")
-
-
 @app.route("/login", methods=['POST'])
 def login():
     login_data = request.get_json()
@@ -377,7 +321,6 @@ def login():
         return jsonify(res=res)
     else:
         pass
-
     password = hashlib.sha512(password.encode()).hexdigest()
     conn = sqlite3.connect(DATABASE, detect_types=sqlite3.PARSE_DECLTYPES)
     conn.row_factory = sqlite3.Row
@@ -435,51 +378,34 @@ def login():
 @app.route('/logout')
 def logout():
     if 'userid' not in flask.session:
-        # ログインしていない場合はログインページにリダイレクト
         return redirect('/login')
-
-    # ログアウトする前にログ情報を記録
     insert_log("ログアウト", "1", "次のユーザーがログアウトしました。", "logout()", f"{flask.session['userid']}")
-
-    # セッションデータをクリア
     flask.session.pop('userid', None)
     flask.session.pop('username', None)
     flask.session.pop('access_level', None)
     flask.session.pop('mail', None)
-
     return redirect(url_for('account'))
-
-
 @app.route("/account_edit")
 def account_edit():
     if 'access_level' not in flask.session:
         return render_template("redirect_login.html",
                                operation="アカウントの情報編集はログインが必要です。ログインをしてください。",
                                redirect_url="/account_edit")
-
     return render_template('account_edit.html', page_name="アカウント編集ページ--")
-
-
 def edit_account_set_data(sql, prams):
     conn = sqlite3.connect(DATABASE)
     c = conn.cursor()
     c.execute(sql, prams)
     conn.commit()
     conn.close()
-
-
 def contains_special_characters(text):
     import re
     pattern = re.compile(r'[ぁ-んァ-ン一-龥]')
     return bool(pattern.search(text))
-
-
 def contains_fullwidth_characters(input_str):
     import re
     pattern = r'[^\x01-\x7E\xA1-\xDF]'  # 正規表現パターン：ASCII以外の文字（全角文字や全角数字）にマッチ
     return bool(re.search(pattern, input_str))
-
-
 @app.route("/account_edit_post", methods=['POST'])
 def account_edit_post():
     data = request.get_json()
@@ -553,6 +479,7 @@ def account_edit_post():
             conn.row_factory = sqlite3.Row
             c = conn.cursor()
             c.execute("SELECT * FROM users WHERE userid = ?", (Decryption(app.config["AES_KEY"],app.config["AES_IV"],data["userid"]),))
+
             db_data = c.fetchone()
             password_hash = hashlib.sha512(Decryption(app.config["AES_KEY"],app.config["AES_IV"],data["password"]).encode()).hexdigest()
             salt = db_data["salt"]
@@ -885,26 +812,48 @@ def check_email_and_certification():
         query = "SELECT * FROM users WHERE userid = ?"
         c.execute(query, (certification_id,))
         result = c.fetchone()
-
         if result:
-            db_password = result['password']
-            db_accesslevel = result['access_level']
-            axesslevelstatus = False
-            axesslevel = str(axesslevel)
-            db_accesslevel = str(db_accesslevel)
-            salt_db = result['salt']
-            certification_pw_hash = str(certification_pw_hash) + str(salt_db)
-            certification_pw_hash = hashlib.sha512(certification_pw_hash.encode()).hexdigest()
-            if certification_pw_hash == db_password:
-                if axesslevel == "5":
-                    axesslevelstatus = db_accesslevel == "5"
-                elif axesslevel == "3" or "4":
-                    axesslevelstatus = db_accesslevel == "4" or db_accesslevel == "5"
+            if result["salt"] != "":
+                db_password = result['password']
+                db_accesslevel = result['access_level']
+                axesslevelstatus = False
+                axesslevel = str(axesslevel)
+                db_accesslevel = str(db_accesslevel)
+                salt_db = result['salt']
+                certification_pw_hash = str(certification_pw_hash) + str(salt_db)
+                certification_pw_hash = hashlib.sha512(certification_pw_hash.encode()).hexdigest()
+                if certification_pw_hash == db_password:
+                    if axesslevel == "5":
+                        axesslevelstatus = db_accesslevel == "5"
+                    elif axesslevel == "3" or "4":
+                        axesslevelstatus = db_accesslevel == "4" or db_accesslevel == "5"
+                    else:
+                        axesslevelstatus = False
                 else:
+                    conn = sqlite3.connect(DATABASE)
+                    cursor = conn.cursor()
+                    login_failures_query = "SELECT login_failures FROM users WHERE userid = ?"
+                    cursor.execute(login_failures_query, (certification_id,))
+                    result = cursor.fetchone()
+                    login_failures_query = result[0]
+                    conn = sqlite3.connect(DATABASE)
+                    cursor = conn.cursor()
+                    update_query = "UPDATE users SET login_failures = ? WHERE userid = ?"
+                    new_value = login_failures_query + 1
+                    cursor.execute(update_query, (new_value, certification_id))
+                    conn.commit()
+                    conn.close()
+
+                    if login_failures_query >= 4:
+                        conn = sqlite3.connect(DATABASE)
+                        cursor = conn.cursor()
+                        update_query = "UPDATE users SET salt = ? WHERE userid = ?"
+                        cursor.execute(update_query, ("", certification_id,))
+                        conn.commit()
+                        conn.close()
                     axesslevelstatus = False
-        else:
-            axesslevelstatus = False
-        conn.close()
+            else:
+                axesslevelstatus = False
     elif axesslevel in ["1", "2"]:
         axesslevelstatus = True
     else:
@@ -1228,7 +1177,7 @@ def rental_book_set():
     }
     conn.commit()
     conn.close()
-    insert_log("本の貸出", "2", f"本の貸出が行われました。貸出コード{rental_id}", "rental_book_set()",
+    insert_log("本の貸出", "2", f"本の貸出が行われました。返却コード{rental_id}", "rental_book_set()",
                f"{result['username']}")
     points = 100 * len(rental_book_list)
     point_operation(flask.session['userid'], points, "add")
@@ -1327,7 +1276,7 @@ def rental_book_id_check():
         result = cursor.fetchone()
         mailaddress = result["mail"]
         username = result["username"]
-        insert_log("本の返却", "2", f"本の返却が行われました。貸出コード{rental_id}", "rental_book_id_check()",
+        insert_log("本の返却", "2", f"本の返却が行われました。返却コード{rental_id}", "rental_book_id_check()",
                    f"{rental_user_id}(レンタルユーザーID)")
         return_data = []
         mail_text = f"返却のお知らせ\n\n" \
@@ -1750,16 +1699,13 @@ def rental_data_post():
             update_sql = "UPDATE book SET stock = ? WHERE management_code = ?"
             params_book = (mode, management_code)
             cursor_book.execute(update_sql, params_book)
-
         conn_book.commit()
         conn_book.close()
-
         conn = sqlite3.connect(DATABASE)
         cursor = conn.cursor()
         cursor.execute(sql, params)
         conn.commit()
         conn.close()
-
         insert_log("貸出データの強制更新", "3", f"貸出データを強制的に更新しました{rental_data}",
                    "rental_data_post()",
                    f"{flask.session['userid']}")
@@ -2006,13 +1952,11 @@ def inventory_update(url):
         sql = f"UPDATE {tabel_name} SET inventory = ? WHERE management_code = ?;"
         params = (True, code)
         cursor.execute(sql, params)
-
         sql = f"SELECT * FROM {tabel_name} WHERE management_code =?;"
         params = (code,)
         cursor.execute(sql, params)
         result = cursor.fetchone()
         title = result[3]
-
         sql = "UPDATE inventory SET last_updated = ? WHERE hash = ?;"
         import datetime
         now = datetime.datetime.now()
@@ -2353,7 +2297,6 @@ def support():
                 app.config['SUPPORT_CHINESE'] = True
                 extracted_url = match.group(0)
                 extracted_url_text = f"コネクトに成功しました。現在外部サポートが受けられる状態です。<br>以下のURLをサポート先に公開してください"
-                print(f"抽出されたURL: {extracted_url}")
                 app.config['SUPPORT_URL'] = extracted_url
             else:
                 extracted_url = "/"

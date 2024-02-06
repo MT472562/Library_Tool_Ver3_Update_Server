@@ -327,8 +327,6 @@
                 document.getElementById("button-container").style.display = "none";
             }
             URL_COPY = supportUrl
-
-            console.log('Support Chinese:', supportChinese);
         })
         .catch(error => console.error('Error:', error));
 
@@ -340,7 +338,7 @@
         if (navigator.clipboard) {
             navigator.clipboard.writeText(text)
                 .then(() => {
-                    console.log('Text copied to clipboard:', text);
+
                 })
                 .catch(err => {
                     console.error('Unable to copy to clipboard', err);
@@ -358,7 +356,6 @@
 
         try {
             document.execCommand('copy');
-            console.log('Text copied to clipboard:', text);
         } catch (err) {
             console.error('Unable to copy to clipboard', err);
         } finally {
@@ -433,10 +430,7 @@
 <script>
     async function Encrypt_Data() {
         var data = await Encrypt("HelloWorld");
-        console.log(data);
         var data = await Decryption(data)
-        console.log(data);
-
     }
     // Encrypt_Data()
 
