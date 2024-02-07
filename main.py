@@ -593,9 +593,11 @@ def accout_id_check():
                                              f"もしこのメールに心当たりがない場合は、このメッセージを破棄してください。\n\n" \
                                              f"図書管理システムサポートチーム\nお問合せ先:https://forms.gle/hYsSKbNmjnPbUfyBA"
     mail_title = "【図書管理システム】ご利用のメールアドレスに紐付けられているユーザーIDのお知らせ"
-    mail_post(mail_text, email, mail_title)
-
-    return jsonify({"status": True})
+    if len(userids) != 0:
+        mail_post(mail_text, email, mail_title)
+        return jsonify({"status": True})
+    else:
+        return jsonify({"status": False})
 
 
 @app.route("/reset_account_check", methods=['POST'])
