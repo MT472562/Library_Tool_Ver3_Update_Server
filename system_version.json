@@ -41,5 +41,6 @@
 	"templates/search.html": 3.79,
 	"templates/test.html": 3.79,
 	"templates/update_book.html": 3.79,
-	"templates/user_setting.html": 3.79
+	"templates/user_setting.html": 3.79,
+	"templates/drawio.html":3.79
 }
