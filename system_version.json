@@ -3,7 +3,7 @@
 	"version_data": "https://raw.githubusercontent.com/MT472562/Library_Tool_Ver3_Update_Server/main/system_version.json",
 	"SystemVersion": 3.79,
 	"VersionName": "図書管理システム-Version3.7.9",
-	"make_directory": [],
+	"make_directory": ["templates/drawio.html"],
 	"main.py": 3.79,
 	"return.py": 3.79,
 	"Maintenance.py": 3.79,
