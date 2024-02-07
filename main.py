@@ -2278,7 +2278,9 @@ def delete_old_backups(folder_path):
     for file_to_delete in files_to_delete:
         file_path = os.path.join(folder_path, file_to_delete)
         os.remove(file_path)
-
+@app.route('/Diagram')
+def drawio():
+    return render_template("drawio.html")
 
 @app.route("/support", methods=['POST'])
 def support():
@@ -2370,7 +2372,6 @@ def Decryption(aes_key, aes_iv, decrypt_text):
     unpadder = padding.PKCS7(algorithms.AES.block_size).unpadder()
     plaintext = unpadder.update(padded_data) + unpadder.finalize()
     return plaintext.decode()
-
 
 
 
