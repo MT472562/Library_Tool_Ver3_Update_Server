@@ -276,15 +276,15 @@ def index():
         links.append(link)
         i = i + 1
         img_url.append(url)
+        import datetime
+        current_date_time = datetime.datetime.now()
+        current_year = current_date_time.year
     return render_template('index.html',
                            url=img_url,
                            links=links,
                            st=st,
                            codes=codes,
-                           page_name="トップページ--")
-@app.route("/cat")
-def cat():
-    return render_template("cat.html")
+                           page_name="トップページ--",Year=current_year)
 @app.route("/account")
 def account():
     msg = request.args.get('msg')
