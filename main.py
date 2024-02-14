@@ -30,11 +30,11 @@ from flask_httpauth import HTTPDigestAuth
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from pyngrok import ngrok, conf
-
+import shutil
 import Maintenance
 import update_module
 from ics import Calendar, Event
-
+import psutil
 # from cryptography.hazmat.primitives.asymmetric import padding
 # from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 # from cryptography.hazmat.primitives import padding
@@ -2053,6 +2053,21 @@ def inventory_lock(url):
                f"{flask.session['userid']}")
     return jsonify(data=data)
 
+def get_system_uptime():
+    boot_time = psutil.boot_time()
+    uptime_seconds = time.time() - boot_time
+    return uptime_seconds
+
+def format_uptime(uptime_seconds):
+    days, remainder = divmod(uptime_seconds, 86400)
+    hours, remainder = divmod(remainder, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return days, hours, minutes, seconds
+def get_system_info():
+    cpu_percent = psutil.cpu_percent(interval=1)
+    memory_info = psutil.virtual_memory()
+    memory_percent = memory_info.percent
+    return cpu_percent, memory_percent
 
 @app.route("/info")
 def ainfo():
@@ -2071,9 +2086,17 @@ def ainfo():
     import datetime
     current_date_time = datetime.datetime.now()
     current_year = current_date_time.year
+    total, used, free= shutil.disk_usage('/')
+    Storage_data=f"{int(used / (2 ** 30))}GB/{int(total / (2 ** 30))}GB"
+    uptime_seconds = get_system_uptime()
+    days, hours, minutes, seconds = format_uptime(uptime_seconds)
+    up_time="System uptime: {} days, {} hours, {} minutes, {} seconds".format(int(days), int(hours), int(minutes),
+                                                                            int(seconds))
+    cpu_percent, memory_percent = get_system_info()
+    sysytem_data="CPU Usage: {}% , Memory Usage: {}% , Storage Usage: {}".format(cpu_percent, memory_percent,Storage_data)
 
     return render_template('info.html', page_name="このシステムについて--", ranking_data=result, Year=current_year,
-                           VersionName=VersionName)
+                           VersionName=VersionName,up_time=up_time,sysytem_data=sysytem_data)
 
 
 @app.route("/user_setting")
