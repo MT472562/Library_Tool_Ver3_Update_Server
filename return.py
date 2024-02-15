@@ -214,7 +214,7 @@ def delayed_return():
                                      f"\n返却コード\n《{rental_code}》\n" \
                                      "今後も返却期日を過ぎている場合、図書委員会からお声がけさせて頂く場合がありますので了承ください。\n\n"
                                      f"延滞メールは本が返却されるまで、毎日送信されます。\n"\
-                                     f"延滞メールはこちらから停止できますが、速やかに返却をするようにしてください。{mail_stop_url}\n\n" \
+                                     f"延滞メールはこちらから1週間停止できますが、フォーム送信後でも速やかに返却をするようにしてください。{mail_stop_url}\n\n" \
                                      "図書管理システムのご利用に際して不明な点やお困りのことがございましたら、\n" \
                                      "いつでもサポートチームまでお問い合わせください。\n\n" \
                                      "図書管理システムサポートチーム\nお問合せ先:https://forms.gle/hYsSKbNmjnPbUfyBA")
@@ -276,4 +276,4 @@ def end_task():
 new_date_in()
 return_mail_post_today()
 delayed_return()
-# end_task()
+end_task()
