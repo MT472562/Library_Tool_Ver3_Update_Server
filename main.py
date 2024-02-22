@@ -35,6 +35,7 @@ import Maintenance
 import update_module
 from ics import Calendar, Event
 import psutil
+
 # from cryptography.hazmat.primitives.asymmetric import padding
 # from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 # from cryptography.hazmat.primitives import padding
@@ -2097,7 +2098,6 @@ def ainfo():
 
     return render_template('info.html', page_name="このシステムについて--", ranking_data=result, Year=current_year,
                            VersionName=VersionName,up_time=up_time,sysytem_data=sysytem_data)
-
 
 @app.route("/user_setting")
 @auth.login_required

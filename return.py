@@ -271,8 +271,6 @@ def end_task():
     conn.close()
     return
 
-
-#
 new_date_in()
 return_mail_post_today()
 delayed_return()
