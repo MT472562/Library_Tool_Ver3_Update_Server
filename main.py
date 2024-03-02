@@ -8,6 +8,7 @@ import os
 import random
 import re
 import secrets
+import shutil
 import sqlite3
 import string
 import threading
@@ -17,24 +18,25 @@ from email import encoders
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+
+import arrow
+import flask
+import psutil
+import qrcode
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding
 from cryptography.hazmat.backends import default_backend
-import arrow
-import flask
-import qrcode
 from flask import render_template, url_for, redirect, jsonify, send_file
 from flask import request
 from flask_httpauth import HTTPDigestAuth
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from pyngrok import ngrok, conf
-import shutil
+
 import Maintenance
 import update_module
 from ics import Calendar, Event
-import psutil
 
 # from cryptography.hazmat.primitives.asymmetric import padding
 # from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -205,7 +207,6 @@ def mail_post_on_file(mail_text, mail_to, title, attachment_paths):
                    f"メールアドレス[{mail_to}]に対して[{title}]というファイル付きメールの送信を試みましたが、失敗しました。送信予定のファイル一覧はこちらです{attachment_paths}",
                    "mail_post_on_file()",
                    f"未ログイン")
-
 def ERROR(error_db_id):
     con = sqlite3.connect(DATABASE)
     error_db = con.execute(
@@ -1893,7 +1894,7 @@ def inventory_edit(url):
         tabel_name = result[2]
         tabel_name = tabel_name.replace(" ", "_").replace(":", "_").replace(".", "_").replace("-", "_")
         tabel_name = "inventory_" + tabel_name
-        sql = f"SELECT * FROM {tabel_name};"
+        sql = "SELECT * FROM {};".format(tabel_name)
         cursor.execute(sql)
         result_inventory = cursor.fetchall()
 
@@ -1924,6 +1925,58 @@ def inventory_edit(url):
 
             return render_template('inventory_edit.html', page_name="棚卸しページ", data=result,
                                    inventory_data=result_inventory, table_name=tabel_name, update="1")
+
+
+@app.route("/inventory/<url>/db_update")
+def inventory_db_edit(url):
+    conn = sqlite3.connect(INVENTORY_DATABASE)
+    cursor = conn.cursor()
+    conn.row_factory = sqlite3.Row
+    sql = "SELECT * FROM inventory WHERE hash = ?;"
+    params = (url,)
+    cursor.execute(sql, params)
+    result = cursor.fetchone()
+    tabel_name = result[2]
+    tabel_name = tabel_name.replace(" ", "_").replace(":", "_").replace(".", "_").replace("-", "_")
+    tabel_name = "inventory_" + tabel_name
+    sql = "SELECT  management_code FROM {} WHERE inventory = ?;".format(tabel_name)
+    cursor.execute(sql, (1,))
+    result_inventory = cursor.fetchall()
+    true_book_list = [item[0] for item in result_inventory]
+    print(true_book_list)
+    sql = "DROP TABLE {};".format(tabel_name)
+    cursor.execute(sql)
+    conn.commit()
+    create_tabel_sql = f"CREATE TABLE IF NOT EXISTS {tabel_name} (id INTEGER PRIMARY KEY AUTOINCREMENT, management_code INTEGER, isbn INTEGER, title TEXT, inventory INTEGER);"
+    cursor.execute(create_tabel_sql)
+    conn.commit()
+    conn.close()
+
+    conn_db = sqlite3.connect(DATABASE)
+    cursor_db = conn_db.cursor()
+    conn_db.row_factory = sqlite3.Row
+    sql = "SELECT management_code,isbn_code,book_title,stock FROM book;"
+    cursor_db.execute(sql)
+    result = cursor_db.fetchall()
+    conn_db.close()
+
+    conn = sqlite3.connect(INVENTORY_DATABASE)
+    cursor = conn.cursor()
+    conn.row_factory = sqlite3.Row
+
+    for num in range(len(result)):
+        insert_sql = f"INSERT INTO {tabel_name} (management_code, isbn, title, inventory) VALUES (?, ?, ?, ?);"
+        if result[num][0] in true_book_list:
+            params = (result[num][0], result[num][1], result[num][2], True)
+        else:
+            params = (result[num][0], result[num][1], result[num][2], False)
+        cursor.execute(insert_sql, params)
+
+    conn.commit()
+    conn.close()
+
+
+    return redirect(url_for('inventory'))
 
 
 @app.route("/inventory/<url>/update", methods=['POST'])

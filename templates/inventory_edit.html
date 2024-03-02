@@ -37,6 +37,9 @@
             transform: translateX(-50%) translateY(-100%); /* Move up to the top */
         }
     }
+    header{
+        display: none;
+    }
 </style>
 
 <script>
@@ -114,7 +117,7 @@
         </button>
         {% elif update == "400" %}
         <button style="margin: 0.5rem"
-                onclick="top_alert('エラー','この棚卸しデータは、現在使用されているbookデータベースのデータと違いがあるため、使用はできません。', 999999)">
+                onclick="top_alert('エラー','この棚卸しデータは、現在使用されているbookデータベースのデータと違いがあるため、使用はできません。差分変更適用をしてください。', 999999)">
             棚卸しスタート
         </button>
         {% elif update == "403" %}
@@ -138,8 +141,16 @@
             ロック
         </button>
         {% endif %}
+        {% if update != "403" %}
+        <a href="{{ request.url }}/db_update"><button style="margin: 0.5rem">データベース差分変更適用</button></a>
+        {% else %}
+        <button style="margin: 0.5rem" onclick="top_alert('エラー','この棚卸しデータはロック済みです。新規で更新する場合、新しく棚卸データを設計してください。', 999999)">データベース差分変更適用</button>
+        {% endif %}
     </div>
 </div>
+<!--<div>-->
+<!--    <input type="number">-->
+<!--</div>-->
 <div id="inventory_data_table">
     <table>
         <thead>
@@ -202,7 +213,7 @@
 <script>
     const type = "{{update}}";
     if (type === "400") {
-        top_alert("エラー", "この棚卸しデータは、現在使用されているbookデータベースのデータと違いがあるため、使用はできません。", 999999)
+        top_alert("エラー", "この棚卸しデータは、現在使用されているbookデータベースのデータと違いがあるため、使用はできません。差分変更適用をしてください。", 999999)
     }else if (type =="403"){
         top_alert("エラー","この棚卸データはロック済みです。　更新は不可能です。",99999)
     }
@@ -412,7 +423,7 @@
         font-size: 1.5rem;
         text-align: center;
         border-radius: 0.5rem;
-        padding: 0.5rem, 0.5rem, 0.5rem, 0.5rem;
+        padding: 0.5rem;
         border: none;
         background-color: #5e9ede;
         color: #131313;
